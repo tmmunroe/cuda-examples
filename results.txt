@@ -1,0 +1,9 @@
+Total vector size: 3840000
+Time: 0.000803 (sec), GFlopsS: 4.782104, GBytesS: 57.385252
+Test PASSED 
+Total vector size: 7680000
+Time: 0.001609 (sec), GFlopsS: 4.772893, GBytesS: 57.274716
+Test PASSED 
+Total vector size: 15360000
+Time: 0.003286 (sec), GFlopsS: 4.674540, GBytesS: 56.094479
+Test PASSED 

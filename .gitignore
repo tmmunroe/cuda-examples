@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# executable files
+vecadd00
+matmult00
