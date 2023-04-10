@@ -7,3 +7,13 @@ Test PASSED
 Total vector size: 15360000
 Time: 0.003286 (sec), GFlopsS: 4.674540, GBytesS: 56.094479
 Test PASSED 
+vecadd01
+Total vector size: 3840000
+Time: 0.000377 (sec), GFlopsS: 10.180864, GBytesS: 122.170372
+Test PASSED 
+Total vector size: 7680000
+Time: 0.000690 (sec), GFlopsS: 11.130703, GBytesS: 133.568437
+Test PASSED 
+Total vector size: 15360000
+Time: 0.001394 (sec), GFlopsS: 11.018387, GBytesS: 132.220645
+Test PASSED 
