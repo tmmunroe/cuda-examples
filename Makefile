@@ -17,7 +17,7 @@ OPTIONS   :=  -O3
 #--maxrregcount=100 --ptxas-options -v 
 
 TAR_FILE_NAME  := TurnerMandevilleCUDA1.tar
-EXECS :=  vecadd00 matmult00
+EXECS :=  vecadd00 matmult00 vecadd01
 all:$(EXECS)
 
 #######################################################################
@@ -38,6 +38,12 @@ vecaddKernel00.o : vecaddKernel00.cu
 
 vecadd00 : vecadd.cu vecaddKernel.h vecaddKernel00.o timer.o
 	${NVCC} $< vecaddKernel00.o -o $@ $(LIB) timer.o $(OPTIONS)
+
+vecaddKernel01.o : vecaddKernel01.cu
+	${NVCC} $< -c -o $@ $(OPTIONS)
+
+vecadd01 : vecadd.cu vecaddKernel.h vecaddKernel01.o timer.o
+	${NVCC} $< vecaddKernel01.o -o $@ $(LIB) timer.o $(OPTIONS)
 
 
 #######################################################################
