@@ -27,9 +27,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
   int block_row = blockIdx.y;
   int block_col = blockIdx.x;
 
-  #pragma unroll
   for (int patch_row=0; patch_row < 2; ++patch_row) {
-    #pragma unroll
     for (int patch_col=0; patch_col < 2; ++patch_col) {
       // Each THREAD BLOCK computes one sub matrix Csub of C
       // EACH THREAD creates its own matrix descriptor Csub
@@ -87,6 +85,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
       // Write Csub to GLOBAL memory.
       // Each thread writes its own cell value.
       Csub[thread_row * C.stride + thread_col] = Cvalue;
+      __syncthreads();
     }
   }
 }
