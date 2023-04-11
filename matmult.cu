@@ -20,7 +20,7 @@
 
 // Defines
 #define epsilon (float)1e-4
-#define verbose 1
+#define verbose 0
 
 Matrix MakeDeviceMatrix(Matrix M, bool copy){
   // Create a new matrix in device memory.
