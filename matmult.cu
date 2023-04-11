@@ -161,6 +161,8 @@ void checkResult(Matrix M) {
 
   if(errCnt>0){
     printf("\n\nTEST FAILED: number of errors:  %d, max rel error: %f\n", errCnt, maxerror);
+  } else {
+    printf("\nTest PASSED\n");
   }
   
   free(correct.elements);
