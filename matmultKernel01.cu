@@ -76,7 +76,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
 
     // Write Csub to GLOBAL memory.
     // Each thread writes its own cell value.
-    Csub[thread_row * C.stride + thread_col] = Cvalue;
+    Csub[thread_row * C.stride + thread_col] = FOOTPRINT_SIZE;
   }
 }
 
