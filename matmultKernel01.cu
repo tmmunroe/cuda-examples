@@ -29,12 +29,12 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
 
   for (int patch_row=0; patch_row < 2; ++patch_row) {
     for (int patch_col=0; patch_col < 2; ++patch_col) {
+      int row_start = block_row * FOOTPRINT_SIZE + patch_row * BLOCK_SIZE;
+      int col_start = block_col * FOOTPRINT_SIZE + patch_col * BLOCK_SIZE;
+
       // Each THREAD BLOCK computes one sub matrix Csub of C
       // EACH THREAD creates its own matrix descriptor Csub
-      Csub = &C.elements[
-        C.stride * FOOTPRINT_SIZE * block_row + FOOTPRINT_SIZE * block_col
-        + C.stride * BLOCK_SIZE * patch_row + BLOCK_SIZE * patch_col
-      ];
+      Csub = &C.elements[C.stride * row_start + col_start];
 
       // Each thread computes one element of Csub in its copy of CValue
       float Cvalue = 0;
@@ -42,16 +42,10 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
       // Loop over all sub matrices in block_row of A and block_col of B
       // required to compute Csub. Block multiply each pair of sub matrices
       // and accumulate results
-      for (int m = 0;  m < (A.width / FOOTPRINT_SIZE); ++m){
+      for (int block_number = block_number;  block_number < (A.width / BLOCK_SIZE); ++block_number){
         // Get Asub and Bsub descriptors
-        Asub = &A.elements[
-          A.stride * FOOTPRINT_SIZE * block_row + FOOTPRINT_SIZE * m
-          + A.stride * BLOCK_SIZE * patch_row + BLOCK_SIZE * patch_col
-        ];
-        Bsub = &B.elements[
-          B.stride * FOOTPRINT_SIZE * m + FOOTPRINT_SIZE * block_col
-          + B.stride * BLOCK_SIZE * patch_row + BLOCK_SIZE * patch_col
-        ];
+        Asub = &A.elements[A.stride * row_start + BLOCK_SIZE * block_number];
+        Bsub = &B.elements[B.stride * BLOCK_SIZE * block_number + col_start];
 
         // Copy ELEMENTS OF  ASub and Bsub into shared memory
         // EACH THREAD loads ONE ELEMENT of ASub and ONE of Bsub
