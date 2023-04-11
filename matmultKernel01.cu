@@ -42,7 +42,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
       // Loop over all sub matrices in block_row of A and block_col of B
       // required to compute Csub. Block multiply each pair of sub matrices
       // and accumulate results
-      for (int block_number = block_number;  block_number < (A.width / BLOCK_SIZE); ++block_number){
+      for (int block_number = 0;  block_number < (A.width / BLOCK_SIZE); ++block_number){
         // Get Asub and Bsub descriptors
         Asub = &A.elements[A.stride * row_start + BLOCK_SIZE * block_number];
         Bsub = &B.elements[B.stride * BLOCK_SIZE * block_number + col_start];
