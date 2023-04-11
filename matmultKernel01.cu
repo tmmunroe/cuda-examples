@@ -21,13 +21,16 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
 
   // matrix blocks
   float *Asub, *Bsub, *Csub;
+
   // Putting these into registers speeds access.
   int thread_row = threadIdx.y;
   int thread_col = threadIdx.x;
   int block_row = blockIdx.y;
   int block_col = blockIdx.x;
 
+  #pragma unroll
   for (int patch_row=0; patch_row < 2; ++patch_row) {
+    #pragma unroll
     for (int patch_col=0; patch_col < 2; ++patch_col) {
       int row_start = block_row * FOOTPRINT_SIZE + patch_row * BLOCK_SIZE;
       int col_start = block_col * FOOTPRINT_SIZE + patch_col * BLOCK_SIZE;
@@ -47,6 +50,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
         Asub = &A.elements[A.stride * row_start + BLOCK_SIZE * block_number];
         Bsub = &B.elements[B.stride * BLOCK_SIZE * block_number + col_start];
 
+
         // Copy ELEMENTS OF  ASub and Bsub into shared memory
         // EACH THREAD loads ONE ELEMENT of ASub and ONE of Bsub
         // Notice: it does not need to be the element it requires to
@@ -57,7 +61,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
         //         even though a thread block has only one shared_A and one shared_B
         __shared__ float shared_A[BLOCK_SIZE][BLOCK_SIZE];
         __shared__ float shared_B[BLOCK_SIZE][BLOCK_SIZE];
-
+        
         // Each thread copies just one element of shared_A and one element of shared_B
         shared_A[thread_row][thread_col] = Asub[thread_row * A.stride + thread_col];
         shared_B[thread_row][thread_col] = Bsub[thread_row * B.stride + thread_col];
