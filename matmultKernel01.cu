@@ -15,8 +15,6 @@
 
 #include "matmultKernel.h"
 
-#define FOOTPRINT_SIZE BLOCK_SIZE
-
 // Define a gpu kernel to perform matrix multiplication
 // of A x B = C.
 __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
