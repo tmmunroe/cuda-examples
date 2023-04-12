@@ -38,7 +38,8 @@ int main(int argc, char** argv) {
     // [host|device] - whether to use the host or device to calculate; defaults to host
     // [st|mt|mbmt] - "single thread", "multi thread", or "multi-block multi thread (saturated)"; defaults to "st"
 
-    int N, size;
+    int N;
+    size_t size;
     std::string compute, threading;
 
     // Variables for host and device vectors.
@@ -51,7 +52,7 @@ int main(int argc, char** argv) {
     float expected;
 
     // extract args
-    N       = (argc < 2 ? 1 : std::stoi(argv[1])) * 1e9;
+    N       = (argc < 2 ? 1 : std::stoi(argv[1])) * 1e6;
     compute = (argc < 3 ? defaultCompute : argv[2]);
     threading    = (argc < 4 ? defaultThreading : argv[3]); 
 
@@ -98,7 +99,7 @@ int main(int argc, char** argv) {
     }
 
     // free arrays
-    free(h_A);
-    free(h_B);
-    free(h_C);
+    if (h_A) free(h_A);
+    if (h_B) free(h_B);
+    if (h_C) free(h_C);
 }
