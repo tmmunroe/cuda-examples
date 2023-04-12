@@ -13,33 +13,127 @@
 const std::string defaultCompute("host");
 const std::string defaultThreading("st");
 
-void deviceAddArrays(float * dest, float * srcA, float * srcB, int N) {
-    // variables for device vectors
-    float* d_A; 
-    float* d_B; 
-    float* d_C;
+// variables for host and device vectors
+float* h_A; 
+float* h_B; 
+float* h_C;
+float* d_A; 
+float* d_B; 
+float* d_C;
 
-    // allocate arrays on device
+void cleanup(bool noError) {
+    cudaError_t error;
+        
+    // Free device vectors
+    if (d_A)
+        cudaFree(d_A);
+    if (d_B)
+        cudaFree(d_B);
+    if (d_C)
+        cudaFree(d_C);
 
-    // copy arrays to device
-
-    // call kernel
-
-    // copy dest back to host
-
-    // free arrays on device
-    if (d_A) free(d_A);
-    if (d_B) free(d_B);
-    if (d_C) free(d_C);
-
-    // report any errors
+    // Free host memory
+    if (h_A)
+        free(h_A);
+    if (h_B)
+        free(h_B);
+    if (h_C)
+        free(h_C);
+        
+    error = cudaDeviceReset();
+    
+    if (!noError || error != cudaSuccess)
+        printf("cuda malloc or cuda thread exit failed \n");
+    
+    fflush( stdout);
+    fflush( stderr);
 }
 
-void hostAddArrays(float * dest, float * srcA, float * srcB, int N) {
-    std::cout << "Adding arrays on host..." << std::endl;
+void checkCUDAError() {
+    cudaError_t err = cudaGetLastError();
+    if( cudaSuccess != err) {
+        std::cerr << "Cuda error: " << cudaGetErrorString(err) << std::endl;
+        cleanup(false);
+        exit(1);
+    }
+}
+
+void makeArrayOnDevice(float *deviceArray, float *hostArray, size_t size) {
+    // allocate array
+    cudaMalloc((void**)&deviceArray, size);
+    checkCUDAError();
+
+    if (hostArray) {
+        cudaMemcpy(deviceArray, hostArray, size, cudaMemcpyHostToDevice);
+        checkCUDAError();
+    }
+}
+
+double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::string threading) {
+    // variables for device vectors
+    cudaError_t error;
+    int gridWidth, blockWidth;
+    double time;
+    size_t size = N * sizeof(float);
+    
+    // set up dimensions for grid and block
+    if (threading == "st") {
+        blockWidth = gridWidth = 1;
+    } else if (threading == "mt") {
+        blockWidth = 256;
+        gridWidth = 1;
+    } else {
+        blockWidth = 256;
+        gridWidth = (int)ceil(float(N) / blockWidth);
+    }
+
+    dim3 dimGrid(gridWidth);
+    dim3 dimBlock(blockWidth);
+
+    // allocate vectors in device memory and do any copies from host to device
+    makeArrayOnDevice(d_A, h_A, size);
+    makeArrayOnDevice(d_B, h_B, size);
+    makeArrayOnDevice(d_C, nullptr, size);
+
+    // call kernel
+    // warm up
+    AddArrays<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+    checkCUDAError();
+    cudaDeviceSynchronize();
+
+    // Initialize timer  
+    initialize_timer();
+    start_timer();
+
+    // Invoke kernel
+    AddArrays<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+    checkCUDAError();
+    cudaDeviceSynchronize();
+
+    // Compute and return elapsed time 
+    stop_timer();
+    time = elapsed_time();
+
+    // copy dest back to host
+    cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
+    checkCUDAError();
+
+    // return elapsed time
+    return time;
+}
+
+double hostAddArrays(float * dest, float * srcA, float * srcB, int N) {
+    // Initialize timer  
+    initialize_timer();
+    start_timer();
+
     for (int i = 0; i < N; ++i) {
         dest[i] = srcA[i] + srcB[i];
     }
+
+    // Compute and return elapsed time 
+    stop_timer();
+    return elapsed_time();
 }
 
 int main(int argc, char** argv) {
@@ -53,9 +147,6 @@ int main(int argc, char** argv) {
     std::string compute, threading;
 
     // Variables for host vectors.
-    float* h_A; 
-    float* h_B; 
-    float* h_C;
     float expected;
 
     // extract args
@@ -66,7 +157,7 @@ int main(int argc, char** argv) {
     std::cout << "Parameters:" << std::endl;
     std::cout << "N: " << N << std::endl;
     std::cout << "Compute: " << compute << std::endl;
-    std::cout << "Threading: " << threading << std::endl;
+    std::cout << "Threading: " << (compute == "device" ? threading : "N/A") << std::endl;
 
     // allocate and initialize arrays
     size = N * sizeof(float);
@@ -81,56 +172,42 @@ int main(int argc, char** argv) {
         h_B[i] = 2.0f;
     }
 
-    try {
-        int nFlops(N), nBytes(3*sizeof(float)*N);
-        double time, nFlopsPerSec, nGFlopsPerSec, nBytesPerSec, nGBytesPerSec;
-        int errors(0);
+    int nFlops(N), nBytes(3*sizeof(float)*N);
+    double time, nFlopsPerSec, nGFlopsPerSec, nBytesPerSec, nGBytesPerSec;
+    int errors(0);
 
-        // Initialize timer  
-        initialize_timer();
-        start_timer();
-
-        // add arrays
-        if (compute == "host") {
-            hostAddArrays(h_C, h_A, h_B, N);
-        } else {
-            deviceAddArrays(h_C, h_A, h_B, N);
-        }
-
-        // Compute elapsed time 
-        stop_timer();
-        time = elapsed_time();
-
-        // Compute floating point operations per second.
-        nFlopsPerSec = nFlops/time;
-        nGFlopsPerSec = nFlopsPerSec*1e-9;
-
-        // Compute transfer rates.
-        nBytesPerSec = nBytes/time;
-        nGBytesPerSec = nBytesPerSec*1e-9;
-
-        // Report timing data.
-        printf("Time: %lf (sec), GFlopsS: %lf, GBytesS: %lf\n", 
-            time, nGFlopsPerSec, nGBytesPerSec);
-        
-        // check result in h_C and report
-        errors = 0;
-        for (int i = 0; i < N; ++i) {
-            if (fabs(h_C[i] - expected) > 1e-5)
-                ++errors;
-        }
-
-        if (errors > 0) {
-            std::cout << "Test FAILED with " << errors << " errors" << std::endl;
-        } else {
-            std::cout << "Test PASSED" << std::endl;
-        }
-    } catch (const std::exception &ex) {
-        std::cout << ex.what() << std::endl;
+    // add arrays
+    if (compute == "host") {
+        time = hostAddArrays(h_C, h_A, h_B, N);
+    } else {
+        time = deviceAddArrays(h_C, h_A, h_B, N, threading);
     }
 
-    // free arrays
-    if (h_A) free(h_A);
-    if (h_B) free(h_B);
-    if (h_C) free(h_C);
+    // Compute floating point operations per second.
+    nFlopsPerSec = nFlops/time;
+    nGFlopsPerSec = nFlopsPerSec*1e-9;
+
+    // Compute transfer rates.
+    nBytesPerSec = nBytes/time;
+    nGBytesPerSec = nBytesPerSec*1e-9;
+
+    // Report timing data.
+    printf("Time: %lf (sec), GFlopsS: %lf, GBytesS: %lf\n", 
+        time, nGFlopsPerSec, nGBytesPerSec);
+    
+    // check result in h_C and report
+    errors = 0;
+    for (int i = 0; i < N; ++i) {
+        if (fabs(h_C[i] - expected) > 1e-5)
+            ++errors;
+    }
+
+    if (errors > 0) {
+        std::cout << "Test FAILED with " << errors << " errors" << std::endl;
+    } else {
+        std::cout << "Test PASSED" << std::endl;
+    }
+
+    // cleanup
+    cleanup(true);
 }
