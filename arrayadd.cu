@@ -165,8 +165,11 @@ int main(int argc, char** argv) {
     size = N * sizeof(float);
 
     h_A = (float*) malloc(size);
+    if (h_A == 0) cleanup(false);
     h_B = (float*) malloc(size);
+    if (h_B == 0) cleanup(false);
     h_C = (float*) malloc(size);
+    if (h_C == 0) cleanup(false);
 
     expected = 3.0f; // to validate the results after adding
     for (int i = 0; i < N; ++i) {
