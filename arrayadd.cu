@@ -61,9 +61,9 @@ void checkCUDAError(std::string msg) {
     }
 }
 
-void makeArrayOnDevice(float *deviceArray, float *hostArray, size_t size) {
+void makeArrayOnDevice(float **deviceArray, float *hostArray, size_t size) {
     // allocate array
-    cudaMalloc((void**)&deviceArray, size);
+    cudaMalloc((void**)deviceArray, size);
     checkCUDAError("makeArrayOnDevice cudaMalloc");
 
     if (hostArray) {
@@ -93,9 +93,9 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
     dim3 dimBlock(blockWidth);
 
     // allocate vectors in device memory and do any copies from host to device
-    makeArrayOnDevice(d_A, h_A, size);
-    makeArrayOnDevice(d_B, h_B, size);
-    makeArrayOnDevice(d_C, nullptr, size);
+    makeArrayOnDevice(&d_A, h_A, size);
+    makeArrayOnDevice(&d_B, h_B, size);
+    makeArrayOnDevice(&d_C, nullptr, size);
 
     // call kernel
     // warm up
