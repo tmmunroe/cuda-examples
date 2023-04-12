@@ -85,11 +85,11 @@ matmult02 : matmult.cu  matmultKernel.h matmultKernel02.o timer.o
 #######################################################################
 ## arrayadd program
 arrayaddKernel.o : arrayaddKernel.cu arrayaddKernel.h
-	${NVCC} $< -c -o $@ $(OPTIONS) -DFOOTPRINT_SIZE=32
+	pushd arrayadd; ${NVCC} $< -c -o $@ $(OPTIONS) -DFOOTPRINT_SIZE=32; popd
 
 arrayadd : arrayadd.cu arrayaddKernel.h arrayaddKernel.o timer.o
-	${NVCC} $< arrayaddKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
+	pushd arrayadd; ${NVCC} $< arrayaddKernel.o -o $@ $(LIB) timer.o $(OPTIONS); popd
 
 arrayaddUnifiedMemory : arrayaddUnifiedMemory.cu arrayaddKernel.h arrayaddKernel.o timer.o
-	${NVCC} $< arrayaddKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
+	pushd arrayadd; ${NVCC} $< arrayaddKernel.o -o $@ $(LIB) timer.o $(OPTIONS); popd
 
