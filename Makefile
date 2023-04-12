@@ -17,7 +17,7 @@ OPTIONS   :=  -O3
 #--maxrregcount=100 --ptxas-options -v 
 
 TAR_FILE_NAME  := TurnerMandevilleCUDA1.tar
-EXECS :=  vecadd00 matmult00 vecadd01 matmult01
+EXECS :=  vecadd00 matmult00 vecadd01 matmult01 matmult02
 all:$(EXECS)
 
 #######################################################################
