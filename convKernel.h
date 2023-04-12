@@ -2,7 +2,7 @@
 #ifndef __CONVKERNEL__
 #define __CONVKERNEL__
 
-typedef struct __align__(64) {
+typedef struct {
   int width;
   int height;
   int depth;
