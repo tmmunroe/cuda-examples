@@ -73,4 +73,13 @@ matmult01 : matmult.cu  matmultKernel.h matmultKernel01.o timer.o
 
 
 
+#######################################################################
+## Expanded Kernel, notice that FOOTPRINT_SIZE is redefined (from 16 to 32)
+matmultKernel02.o : matmultKernel02.cu matmultKernel.h
+	${NVCC} $< -c -o $@ $(OPTIONS) -DFOOTPRINT_SIZE=32
+
+matmult02 : matmult.cu  matmultKernel.h matmultKernel02.o timer.o
+	${NVCC} $< matmultKernel02.o -o $@ $(LIB) timer.o $(OPTIONS) -DFOOTPRINT_SIZE=32
+
+
 
