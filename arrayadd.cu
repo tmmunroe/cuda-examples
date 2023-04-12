@@ -26,6 +26,7 @@ void deviceAddArrays(float * dest, float * srcA, float * srcB, int N) {
 }
 
 void hostAddArrays(float * dest, float * srcA, float * srcB, int N) {
+    std::cout << "Adding arrays on host..." << std::endl;
     for (int i = 0; i < N; ++i) {
         dest[i] = srcA[i] + srcB[i];
     }
@@ -38,7 +39,7 @@ int main(int argc, char** argv) {
     // [st|mt|mbmt] - "single thread", "multi thread", or "multi-block multi thread (saturated)"; defaults to "st"
 
     int N, size;
-    std::string compute, arch;
+    std::string compute, threading;
 
     // Variables for host and device vectors.
     float* h_A; 
@@ -52,7 +53,12 @@ int main(int argc, char** argv) {
     // extract args
     N       = (argc < 2 ? 1 : std::stoi(argv[1])) * 1e9;
     compute = (argc < 3 ? defaultCompute : argv[2]);
-    arch    = (argc < 4 ? defaultThreading : argv[3]); 
+    threading    = (argc < 4 ? defaultThreading : argv[3]); 
+
+    std::cout << "Parameters:" << std::endl;
+    std::cout << "N: " << N << std::endl;
+    std::cout << "Compute: " << compute << std::endl;
+    std::cout << "Threading: " << threading << std::endl;
 
     // allocate and initialize arrays
     size = N * sizeof(float);
