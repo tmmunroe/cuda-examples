@@ -101,7 +101,3 @@ convKernel.o : convKernel.cu convKernel.h
 conv : conv.cu convKernel.h convKernel.o timer.o
 	${NVCC} $< convKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
 
-convUnifiedMemory : convUnifiedMemory.cu convKernel.h convKernel.o timer.o
-	${NVCC} $< convKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
-
-
