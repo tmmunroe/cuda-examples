@@ -14,6 +14,11 @@ const std::string defaultCompute("host");
 const std::string defaultThreading("st");
 
 void deviceAddArrays(float * dest, float * srcA, float * srcB, int N) {
+    // variables for device vectors
+    float* d_A; 
+    float* d_B; 
+    float* d_C;
+
     // allocate arrays on device
 
     // copy arrays to device
@@ -23,6 +28,11 @@ void deviceAddArrays(float * dest, float * srcA, float * srcB, int N) {
     // copy dest back to host
 
     // free arrays on device
+    if (d_A) free(d_A);
+    if (d_B) free(d_B);
+    if (d_C) free(d_C);
+
+    // report any errors
 }
 
 void hostAddArrays(float * dest, float * srcA, float * srcB, int N) {
@@ -42,13 +52,10 @@ int main(int argc, char** argv) {
     size_t size;
     std::string compute, threading;
 
-    // Variables for host and device vectors.
+    // Variables for host vectors.
     float* h_A; 
     float* h_B; 
-    float* h_C; 
-    float* d_A; 
-    float* d_B; 
-    float* d_C; 
+    float* h_C;
     float expected;
 
     // extract args
@@ -75,6 +82,13 @@ int main(int argc, char** argv) {
     }
 
     try {
+        int nFlops(N), nBytes(3*sizeof(float)*N);
+        double time, nFlopsPerSec, nGFlopsPerSec, nBytesPerSec, nGBytesPerSec;
+
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
+
         // add arrays
         if (compute == "host") {
             hostAddArrays(h_C, h_A, h_B, N);
@@ -82,6 +96,22 @@ int main(int argc, char** argv) {
             deviceAddArrays(h_C, h_A, h_B, N);
         }
 
+        // Compute elapsed time 
+        stop_timer();
+        time = elapsed_time();
+
+        // Compute floating point operations per second.
+        double nFlopsPerSec = nFlops/time;
+        double nGFlopsPerSec = nFlopsPerSec*1e-9;
+
+        // Compute transfer rates.
+        double nBytesPerSec = nBytes/time;
+        double nGBytesPerSec = nBytesPerSec*1e-9;
+
+        // Report timing data.
+        printf("Time: %lf (sec), GFlopsS: %lf, GBytesS: %lf\n", 
+            time, nGFlopsPerSec, nGBytesPerSec);
+        
         // check result in h_C and report
         int errors = 0;
         for (int i = 0; i < N; ++i) {
