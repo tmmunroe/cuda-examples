@@ -22,35 +22,6 @@ typedef struct __align__(64) {
 
 __global__ void Conv(const Tensor input, Tensor output, const Tensor filters[filterCount]);
 
-
-__device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y) {
-    // using lecture notes as a basis for this function
-    double pixelValue = 0.0;
-
-    // note that z is the same for both the filter and the input
-    int start_x = out_x - (filter.width/2);
-    int start_y = out_y - (filter.height/2);
-
-    // note that z is the same for both the filter and the input
-    for (int z = 0; z < filter.depth; ++z) {
-        for(int dy = 0; dy < filter.height; ++dy) {
-            for(int dx = 0; dx < filter.width; ++dx) {
-                int in_x = start_x + dx;
-                int in_y = start_y + dy;
-                
-                // Verify we are inside the boundaries width and height
-                if(in_x > -1 && in_x < input.width
-                    && in_y > -1 && in_y < input.height) {
-                    //NOTE: we flip dy and dx when indexing into the filter in order to get the transpose of it
-                    pixelValue += cellValue(input, in_x, in_y, z) * cellValue(filter, dy, dx, z);
-                }
-            }
-        }
-    }
-
-    return pixelValue;
-}
-
 __device__ Tensor getSubTensor(const Tensor source, int x, int y, int z,
         int blockWidth, int blockHeight, int blockDepth) {
     Tensor subTensor;
@@ -133,4 +104,32 @@ Tensor * createDeviceTensorArray(Tensor * sources, int sourcesCount, bool copy) 
     free(deviceTensors);
 
     return deviceArrayOfDeviceTensors;
+}
+
+__device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y) {
+    // using lecture notes as a basis for this function
+    double pixelValue = 0.0;
+
+    // note that z is the same for both the filter and the input
+    int start_x = out_x - (filter.width/2);
+    int start_y = out_y - (filter.height/2);
+
+    // note that z is the same for both the filter and the input
+    for (int z = 0; z < filter.depth; ++z) {
+        for(int dy = 0; dy < filter.height; ++dy) {
+            for(int dx = 0; dx < filter.width; ++dx) {
+                int in_x = start_x + dx;
+                int in_y = start_y + dy;
+                
+                // Verify we are inside the boundaries width and height
+                if(in_x > -1 && in_x < input.width
+                    && in_y > -1 && in_y < input.height) {
+                    //NOTE: we flip dy and dx when indexing into the filter in order to get the transpose of it
+                    pixelValue += cellValue(input, in_x, in_y, z) * cellValue(filter, dy, dx, z);
+                }
+            }
+        }
+    }
+
+    return pixelValue;
 }
