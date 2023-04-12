@@ -67,7 +67,7 @@ void makeArrayOnDevice(float **deviceArray, float *hostArray, size_t size) {
     checkCUDAError("makeArrayOnDevice cudaMalloc");
 
     if (hostArray) {
-        cudaMemcpy(deviceArray, hostArray, size, cudaMemcpyHostToDevice);
+        cudaMemcpy(*deviceArray, hostArray, size, cudaMemcpyHostToDevice);
         checkCUDAError("makeArrayOnDevice cudaMemcpy");
     }
 }
