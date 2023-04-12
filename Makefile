@@ -84,9 +84,6 @@ matmult02 : matmult.cu  matmultKernel.h matmultKernel02.o timer.o
 
 #######################################################################
 ## arrayadd program
-arrayaddKernel.o : arrayaddKernel.cu
-	${NVCC} $< -c -o $@ $(OPTIONS)
-
-arrayadd : arrayadd.cu arrayaddKernel.h arrayaddKernel.o timer.o
+arrayaddUnifiedMemory : arrayaddUnifiedMemory.cu arrayaddKernel.h arrayaddKernel.o timer.o
 	${NVCC} $< arrayaddKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
 
