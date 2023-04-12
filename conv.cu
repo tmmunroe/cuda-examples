@@ -21,7 +21,7 @@ void checkResult(Tensor output) {
 
 }
 
-void main(int argc, char ** argv) {
+int main(int argc, char ** argv) {
     // const int inChannels(3), inHeight(1024), inWidth(1024);
     // const int outChannels(64), outHeight(1024), outWidth(1024);
     // const int filterHeight(3), filterWidth(3);
@@ -99,7 +99,6 @@ void main(int argc, char ** argv) {
     cudaMemcpy(output.elements, device_output.elements, size, cudaMemcpyDeviceToHost);
 
     // check result
-    double value;
     int errors = 0;
     for (int c = 0; c < output.depth; ++c) {
         for (int y = 0; y < output.height; ++y) {
