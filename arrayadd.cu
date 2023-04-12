@@ -42,17 +42,20 @@ void cleanup(bool noError) {
         
     error = cudaDeviceReset();
     
-    if (!noError || error != cudaSuccess)
-        printf("cuda malloc or cuda thread exit failed \n");
+    if (!noError) {
+        std::cerr << "cleanup called after error" << std::endl;
+    } else if (error != cudaSuccess) {
+        std::cerr << "cuda error during cleanup cudaDeviceReset: " << cudaGetErrorString(error) << std::endl;
+    }
     
     fflush( stdout);
     fflush( stderr);
 }
 
-void checkCUDAError() {
+void checkCUDAError(std::string msg) {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err) {
-        std::cerr << "Cuda error: " << cudaGetErrorString(err) << std::endl;
+        std::cerr << "Cuda error: " << msg << " - " << cudaGetErrorString(err) << std::endl;
         cleanup(false);
         exit(1);
     }
@@ -61,17 +64,16 @@ void checkCUDAError() {
 void makeArrayOnDevice(float *deviceArray, float *hostArray, size_t size) {
     // allocate array
     cudaMalloc((void**)&deviceArray, size);
-    checkCUDAError();
+    checkCUDAError("makeArrayOnDevice cudaMalloc");
 
     if (hostArray) {
         cudaMemcpy(deviceArray, hostArray, size, cudaMemcpyHostToDevice);
-        checkCUDAError();
+        checkCUDAError("makeArrayOnDevice cudaMemcpy");
     }
 }
 
 double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::string threading) {
     // variables for device vectors
-    cudaError_t error;
     int gridWidth, blockWidth;
     double time;
     size_t size = N * sizeof(float);
@@ -98,7 +100,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
     // call kernel
     // warm up
     AddArrays<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
-    checkCUDAError();
+    checkCUDAError("AddArrays warmup");
     cudaDeviceSynchronize();
 
     // Initialize timer  
@@ -107,16 +109,16 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
 
     // Invoke kernel
     AddArrays<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
-    checkCUDAError();
+    checkCUDAError("AddArrays trial");
     cudaDeviceSynchronize();
 
     // Compute and return elapsed time 
     stop_timer();
     time = elapsed_time();
 
-    // copy dest back to host
+    // copy device back to host
     cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
-    checkCUDAError();
+    checkCUDAError("cudaMemcpy deviceToHost");
 
     // return elapsed time
     return time;
