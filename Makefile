@@ -84,7 +84,7 @@ matmult02 : matmult.cu  matmultKernel.h matmultKernel02.o timer.o
 
 #######################################################################
 ## arrayadd program
-arrayaddKernel.o : arrayaddKernel.cu array.h
+arrayaddKernel.o : arrayaddKernel.cu arrayaddKernel.h
 	${NVCC} $< -c -o $@ $(OPTIONS) -DFOOTPRINT_SIZE=32
 
 arrayadd : arrayadd.cu arrayaddKernel.h arrayaddKernel.o timer.o
