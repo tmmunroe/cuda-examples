@@ -77,44 +77,81 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
     int gridWidth, blockWidth;
     double time;
     size_t size = N * sizeof(float);
-    
-    // set up dimensions for grid and block
-    if (threading == "st") {
-        blockWidth = gridWidth = 1;
-    } else if (threading == "mt") {
-        blockWidth = 256;
-        gridWidth = 1;
-    } else {
-        blockWidth = 256;
-        gridWidth = (int)ceil(float(N) / blockWidth);
-    }
-
-    dim3 dimGrid(gridWidth);
-    dim3 dimBlock(blockWidth);
 
     // allocate vectors in device memory and do any copies from host to device
     makeArrayOnDevice(&d_A, h_A, size);
     makeArrayOnDevice(&d_B, h_B, size);
     makeArrayOnDevice(&d_C, nullptr, size);
+    
+    // set up dimensions for grid and block
+    if (threading == "st") {
+        dim3 dimBlock(1);
+        dim3 dimGrid(1);
+        
+        // call kernel
+        // warm up
+        AddArraysST<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+        checkCUDAError("AddArrays warmup");
+        cudaDeviceSynchronize();
 
-    // call kernel
-    // warm up
-    AddArrays<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
-    checkCUDAError("AddArrays warmup");
-    cudaDeviceSynchronize();
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
 
-    // Initialize timer  
-    initialize_timer();
-    start_timer();
+        // Invoke kernel
+        AddArraysST<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+        checkCUDAError("AddArrays trial");
+        cudaDeviceSynchronize();
 
-    // Invoke kernel
-    AddArrays<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
-    checkCUDAError("AddArrays trial");
-    cudaDeviceSynchronize();
+        // Compute and return elapsed time 
+        stop_timer();
+        time = elapsed_time();
 
-    // Compute and return elapsed time 
-    stop_timer();
-    time = elapsed_time();
+    } else if (threading == "mt") {
+        dim3 dimBlock(256);
+        dim3 dimGrid(1);
+        
+        // call kernel
+        // warm up
+        AddArraysMT<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+        checkCUDAError("AddArrays warmup");
+        cudaDeviceSynchronize();
+
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
+
+        // Invoke kernel
+        AddArraysMT<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+        checkCUDAError("AddArrays trial");
+        cudaDeviceSynchronize();
+
+        // Compute and return elapsed time 
+        stop_timer();
+        time = elapsed_time();
+    } else {
+        dim3 dimBlock(256);
+        dim3 dimGrid((int)ceil(float(N) / blockWidth));
+        
+        // call kernel
+        // warm up
+        AddArraysMBMT<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+        checkCUDAError("AddArrays warmup");
+        cudaDeviceSynchronize();
+
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
+
+        // Invoke kernel
+        AddArraysMBMT<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
+        checkCUDAError("AddArrays trial");
+        cudaDeviceSynchronize();
+
+        // Compute and return elapsed time 
+        stop_timer();
+        time = elapsed_time();
+    }
 
     // copy device back to host
     cudaError_t err = cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
