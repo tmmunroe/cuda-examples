@@ -74,7 +74,6 @@ void makeArrayOnDevice(float **deviceArray, float *hostArray, size_t size) {
 
 double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::string threading) {
     // variables for device vectors
-    int gridWidth, blockWidth;
     double time;
     size_t size = N * sizeof(float);
 
@@ -130,7 +129,8 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
         stop_timer();
         time = elapsed_time();
     } else {
-        dim3 dimBlock(256);
+        int blockWidth = 256;
+        dim3 dimBlock(blockWidth);
         dim3 dimGrid((int)ceil(float(N) / blockWidth));
         
         // call kernel
