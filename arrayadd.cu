@@ -84,6 +84,7 @@ int main(int argc, char** argv) {
     try {
         int nFlops(N), nBytes(3*sizeof(float)*N);
         double time, nFlopsPerSec, nGFlopsPerSec, nBytesPerSec, nGBytesPerSec;
+        int errors(0);
 
         // Initialize timer  
         initialize_timer();
@@ -101,19 +102,19 @@ int main(int argc, char** argv) {
         time = elapsed_time();
 
         // Compute floating point operations per second.
-        double nFlopsPerSec = nFlops/time;
-        double nGFlopsPerSec = nFlopsPerSec*1e-9;
+        nFlopsPerSec = nFlops/time;
+        nGFlopsPerSec = nFlopsPerSec*1e-9;
 
         // Compute transfer rates.
-        double nBytesPerSec = nBytes/time;
-        double nGBytesPerSec = nBytesPerSec*1e-9;
+        nBytesPerSec = nBytes/time;
+        nGBytesPerSec = nBytesPerSec*1e-9;
 
         // Report timing data.
         printf("Time: %lf (sec), GFlopsS: %lf, GBytesS: %lf\n", 
             time, nGFlopsPerSec, nGBytesPerSec);
         
         // check result in h_C and report
-        int errors = 0;
+        errors = 0;
         for (int i = 0; i < N; ++i) {
             if (fabs(h_C[i] - expected) > 1e-5)
                 ++errors;
