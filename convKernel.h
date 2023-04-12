@@ -1,4 +1,7 @@
 
+#ifndef __CONVKERNEL__
+#define __CONVKERNEL__
+
 typedef struct __align__(64) {
   int width;
   int height;
@@ -133,3 +136,5 @@ __device__ double convolveWithFilter(const Tensor input, const Tensor filter, in
 
     return pixelValue;
 }
+
+#endif
