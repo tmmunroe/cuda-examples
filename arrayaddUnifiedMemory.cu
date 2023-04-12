@@ -17,10 +17,20 @@ const std::string defaultThreading("st");
 float* A; 
 float* B; 
 float* C;
+float* h_A; 
+float* h_B; 
+float* h_C;
 
 void cleanup(bool noError) {
     cudaError_t error;
         
+    if (h_A)
+        free(h_A);
+    if (h_B)
+        free(h_B);
+    if (h_C)
+        free(h_C);
+
     // Free device vectors
     if (A)
         cudaFree(A);
@@ -28,7 +38,7 @@ void cleanup(bool noError) {
         cudaFree(B);
     if (C)
         cudaFree(C);
-        
+    
     error = cudaDeviceReset();
     
     if (!noError) {
@@ -63,7 +73,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
         
         // call kernel
         // warm up
-        AddArraysST<<<dimGrid, dimBlock>>>(A, B, C, N);
+        AddArraysST<<<dimGrid, dimBlock>>>(srcA, srcB, dest, N);
         checkCUDAError("AddArrays warmup");
         cudaDeviceSynchronize();
 
@@ -72,7 +82,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
         start_timer();
 
         // Invoke kernel
-        AddArraysST<<<dimGrid, dimBlock>>>(A, B, C, N);
+        AddArraysST<<<dimGrid, dimBlock>>>(srcA, srcB, dest, N);
         checkCUDAError("AddArrays trial");
         cudaDeviceSynchronize();
 
@@ -86,7 +96,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
         
         // call kernel
         // warm up
-        AddArraysMT<<<dimGrid, dimBlock>>>(A, B, C, N);
+        AddArraysMT<<<dimGrid, dimBlock>>>(srcA, srcB, dest, N);
         checkCUDAError("AddArrays warmup");
         cudaDeviceSynchronize();
 
@@ -95,7 +105,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
         start_timer();
 
         // Invoke kernel
-        AddArraysMT<<<dimGrid, dimBlock>>>(A, B, C, N);
+        AddArraysMT<<<dimGrid, dimBlock>>>(srcA, srcB, dest, N);
         checkCUDAError("AddArrays trial");
         cudaDeviceSynchronize();
 
@@ -109,7 +119,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
         
         // call kernel
         // warm up
-        AddArraysMBMT<<<dimGrid, dimBlock>>>(A, B, C, N);
+        AddArraysMBMT<<<dimGrid, dimBlock>>>(srcA, srcB, dest, N);
         checkCUDAError("AddArrays warmup");
         cudaDeviceSynchronize();
 
@@ -118,7 +128,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
         start_timer();
 
         // Invoke kernel
-        AddArraysMBMT<<<dimGrid, dimBlock>>>(A, B, C, N);
+        AddArraysMBMT<<<dimGrid, dimBlock>>>(srcA, srcB, dest, N);
         checkCUDAError("AddArrays trial");
         cudaDeviceSynchronize();
 
@@ -183,27 +193,43 @@ int main(int argc, char** argv) {
         checkCUDAError("makeArrayOnDevice cudaMalloc");
         cudaMallocManaged((void**)&C, size);
         checkCUDAError("makeArrayOnDevice cudaMalloc");   
-    } else {
-        A = (float*) malloc(size);
-        if (A == 0) cleanup(false);
-        B = (float*) malloc(size);
-        if (B == 0) cleanup(false);
-        C = (float*) malloc(size);
-        if (C == 0) cleanup(false);
-    }
-
-    expected = 3.0f; // to validate the results after adding
-    for (int i = 0; i < N; ++i) {
-        A[i] = 1.0f;
-        B[i] = 2.0f;
-    }
-
-    // add arrays
-    if (compute == "host") {
-        time = hostAddArrays(C, A, B, N);
-    } else {
+        expected = 3.0f; // to validate the results after adding
+        for (int i = 0; i < N; ++i) {
+            A[i] = 1.0f;
+            B[i] = 2.0f;
+        }
+        
         time = deviceAddArrays(C, A, B, N, threading);
+
+        errors = 0;
+        for (int i = 0; i < N; ++i) {
+            if (fabs(C[i] - expected) > 1e-5)
+                ++errors;
+        }
+    } else {
+        h_A = (float*) malloc(size);
+        if (h_A == 0) cleanup(false);
+        h_B = (float*) malloc(size);
+        if (h_B == 0) cleanup(false);
+        h_C = (float*) malloc(size);
+        if (h_C == 0) cleanup(false); 
+        
+        expected = 3.0f; // to validate the results after adding
+        for (int i = 0; i < N; ++i) {
+            h_A[i] = 1.0f;
+            h_B[i] = 2.0f;
+        }
+
+        time = hostAddArrays(h_C, h_A, h_B, N);
+
+        errors = 0;
+        for (int i = 0; i < N; ++i) {
+            if (fabs(h_C[i] - expected) > 1e-5)
+                ++errors;
+        }
+
     }
+
 
     // Compute floating point operations per second.
     nFlopsPerSec = nFlops/time;
@@ -218,12 +244,6 @@ int main(int argc, char** argv) {
         time, nGFlopsPerSec, nGBytesPerSec);
     
     // check result in h_C and report
-    errors = 0;
-    for (int i = 0; i < N; ++i) {
-        if (fabs(C[i] - expected) > 1e-5)
-            ++errors;
-    }
-
     if (errors > 0) {
         std::cout << "Test FAILED with " << errors << " errors" << std::endl;
     } else {
