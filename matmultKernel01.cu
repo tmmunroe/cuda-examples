@@ -61,14 +61,15 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
   // and accumulate results
   for (int block_number = 0;  block_number < (A.width / FOOTPRINT_SIZE); ++block_number){
     // Get Asub and Bsub descriptors
-    Asub = &A.elements[A.stride * row_start + 32 * block_number];
-    Bsub = &B.elements[B.stride * 32 * block_number + col_start];
+    Asub = &A.elements[A.stride * row_start + FOOTPRINT_SIZE * block_number];
+    Bsub = &B.elements[B.stride * FOOTPRINT_SIZE * block_number + col_start];
     
     // Each thread copies just four elements of shared_A and four elements of shared_B
     #pragma unroll
-    for (int rowToCopy=zeroToEight; rowToCopy < 32; rowToCopy += 8) {
-      shared_A[rowToCopy][zeroToThirtyTwo] = Asub[rowToCopy * A.stride + zeroToThirtyTwo];
-      shared_B[rowToCopy][zeroToThirtyTwo] = Bsub[rowToCopy * B.stride + zeroToThirtyTwo];
+    for (int rowToCopy=0; rowToCopy < 4; ++rowToCopy) {
+      int row = zeroToEight+rowToCopy*8;
+      shared_A[row][zeroToThirtyTwo] = Asub[row * A.stride + zeroToThirtyTwo];
+      shared_B[row][zeroToThirtyTwo] = Bsub[row * B.stride + zeroToThirtyTwo];
     }
 
     // Synchronize to ensure all elements are read
@@ -95,5 +96,6 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
   Csub[zeroToEight+8 * C.stride + zeroToThirtyTwo] = c1;
   Csub[zeroToEight+16 * C.stride + zeroToThirtyTwo] = c2;
   Csub[zeroToEight+24 * C.stride + zeroToThirtyTwo] = c3;
+  __syncthreads();
 }
 
