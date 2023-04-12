@@ -51,6 +51,12 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
   Csub = &C.elements[C.stride * row_start + col_start];
 
   // Each thread computes one element of Csub in its copy of CValue
+  int row0 = zeroToEight;
+  int row1 = zeroToEight + 8;
+  int row2 = zeroToEight + 16;
+  int row3 = zeroToEight + 24;
+
+
   float c0 = 0;
   float c1 = 0;
   float c2 = 0;
@@ -65,12 +71,17 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
     Bsub = &B.elements[B.stride * FOOTPRINT_SIZE * block_number + col_start];
     
     // Each thread copies just four elements of shared_A and four elements of shared_B
-    #pragma unroll
-    for (int rowToCopy=0; rowToCopy < 4; ++rowToCopy) {
-      int row = zeroToEight+rowToCopy*8;
-      shared_A[row][zeroToThirtyTwo] = Asub[row * A.stride + zeroToThirtyTwo];
-      shared_B[row][zeroToThirtyTwo] = Bsub[row * B.stride + zeroToThirtyTwo];
-    }
+    shared_A[row0][zeroToThirtyTwo] = Asub[row0 * A.stride + zeroToThirtyTwo];
+    shared_A[row1][zeroToThirtyTwo] = Asub[row1 * A.stride + zeroToThirtyTwo];
+    shared_A[row2][zeroToThirtyTwo] = Asub[row2 * A.stride + zeroToThirtyTwo];
+    shared_A[row3][zeroToThirtyTwo] = Asub[row3 * A.stride + zeroToThirtyTwo];
+
+    shared_B[row0][zeroToThirtyTwo] = Bsub[row0 * B.stride + zeroToThirtyTwo];
+    shared_B[row1][zeroToThirtyTwo] = Bsub[row1 * B.stride + zeroToThirtyTwo];
+    shared_B[row2][zeroToThirtyTwo] = Bsub[row2 * B.stride + zeroToThirtyTwo];
+    shared_B[row3][zeroToThirtyTwo] = Bsub[row3 * B.stride + zeroToThirtyTwo];
+
+
 
     // Synchronize to ensure all elements are read
     __syncthreads();
@@ -79,10 +90,10 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
     // computing one Cvalue by accumulation
 #pragma unroll
     for(int e=0; e<32; ++e) {
-      c0 += shared_A[zeroToEight][e] * shared_B[e][zeroToThirtyTwo];
-      c1 += shared_A[zeroToEight+8][e] * shared_B[e][zeroToThirtyTwo];
-      c2 += shared_A[zeroToEight+16][e] * shared_B[e][zeroToThirtyTwo];
-      c3 += shared_A[zeroToEight+24][e] * shared_B[e][zeroToThirtyTwo];
+      c0 += shared_A[row0][e] * shared_B[e][zeroToThirtyTwo];
+      c1 += shared_A[row1][e] * shared_B[e][zeroToThirtyTwo];
+      c2 += shared_A[row2][e] * shared_B[e][zeroToThirtyTwo];
+      c3 += shared_A[row3][e] * shared_B[e][zeroToThirtyTwo];
     }
 
     // Synchronize to ensure all Cvalues have been incremented
@@ -96,10 +107,10 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
   // Csub[zeroToEight+8 * C.stride + zeroToThirtyTwo] = c1;
   // Csub[zeroToEight+16 * C.stride + zeroToThirtyTwo] = c2;
   // Csub[zeroToEight+24 * C.stride + zeroToThirtyTwo] = c3;
-  Csub[zeroToEight * C.stride + zeroToThirtyTwo] = zeroToEight;
-  Csub[zeroToEight+8 * C.stride + zeroToThirtyTwo] = zeroToEight+8;
-  Csub[zeroToEight+16 * C.stride + zeroToThirtyTwo] = zeroToEight+16;
-  Csub[zeroToEight+24 * C.stride + zeroToThirtyTwo] = zeroToEight+24;
+  Csub[row0 * C.stride + zeroToThirtyTwo] = row0;
+  Csub[row1 * C.stride + zeroToThirtyTwo] = row1;
+  Csub[row2 * C.stride + zeroToThirtyTwo] = row2;
+  Csub[row3 * C.stride + zeroToThirtyTwo] = row3;
   __syncthreads();
 }
 
