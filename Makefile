@@ -17,7 +17,7 @@ OPTIONS   :=  -O3
 #--maxrregcount=100 --ptxas-options -v 
 
 TAR_FILE_NAME  := TurnerMandevilleCUDA1.tar
-EXECS :=  vecadd00 matmult00 vecadd01 matmult01 matmult02 arrayadd
+EXECS :=  vecadd00 matmult00 vecadd01 matmult01 matmult02 arrayadd arrayaddUnifiedMemory
 all:$(EXECS)
 
 #######################################################################
@@ -84,12 +84,12 @@ matmult02 : matmult.cu  matmultKernel.h matmultKernel02.o timer.o
 
 #######################################################################
 ## arrayadd program
-arrayaddKernel.o :
-	pushd arrayadd; make $@; popd;
+arrayaddKernel.o : arrayaddKernel.cu array.h
+	${NVCC} $< -c -o $@ $(OPTIONS) -DFOOTPRINT_SIZE=32
 
-arrayadd :
-	pushd arrayadd; make $@; popd;
+arrayadd : arrayadd.cu arrayaddKernel.h arrayaddKernel.o timer.o
+	${NVCC} $< arrayaddKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
 
-arrayaddUnifiedMemory :
-	pushd arrayadd; make $@; popd;
+arrayaddUnifiedMemory : arrayaddUnifiedMemory.cu arrayaddKernel.h arrayaddKernel.o timer.o
+	${NVCC} $< arrayaddKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
 
