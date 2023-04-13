@@ -29,12 +29,9 @@ __device__ void setCellValue(const Tensor target, double value, int x, int y, in
 __device__ double cellValue(const Tensor source, int x, int y, int z);
 __host__ void setCellValueHost(const Tensor target, double value, int x, int y, int z);
 __host__ double cellValueHost(const Tensor source, int x, int y, int z);
-
+__host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim);
 
 Tensor createDeviceTensor(Tensor source, bool copy);
-
 Tensor createHostTensor(int width, int height, int depth);
-
-Tensor * createDeviceTensorArray(Tensor * sources, int sourcesCount, bool copy);
 
 #endif

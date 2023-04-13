@@ -17,9 +17,6 @@ F[k, c, i, j] = (c + k) · (i + j)
 
 The output tensor O with dimensions: K,W,H
 */
-void checkResult(Tensor output) {
-
-}
 
 int main(int argc, char ** argv) {
     // const int inChannels(3), inHeight(1024), inWidth(1024);
@@ -68,8 +65,14 @@ int main(int argc, char ** argv) {
                 }
             }
         }
-
     }
+    printf("Section of filter: ");
+    printTensor(filters[0], 3, 3, 3);
+
+    printf("Section of input: ");
+    printTensor(input, 3, 3, 3);
+
+
 
     // create tensors on device
     Tensor device_input = createDeviceTensor(input, true);
@@ -114,6 +117,9 @@ int main(int argc, char ** argv) {
     // report result
     if (errors != 0) {
         std::cout << "Test FAILED with " << errors << " errors" << std::endl;
+
+        printf("Section of output: ");
+        printTensor(output, 3, 3, 3);
     } else {
         std::cout << "Test PASSED" << std::endl;
     }

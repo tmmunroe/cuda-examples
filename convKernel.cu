@@ -48,32 +48,11 @@ Tensor createHostTensor(int width, int height, int depth){
   return tensor;
 }
 
-Tensor * createDeviceTensorArray(Tensor * sources, int sourcesCount, bool copy) {
-    Tensor * deviceTensors;
-    Tensor * deviceArrayOfDeviceTensors;
-    size_t size = sourcesCount * sizeof(Tensor);
-
-    // first, create an array of tensors on the device
-    deviceTensors = (Tensor*)malloc(size);
-    for (int k=0; k < sourcesCount; ++k) {
-        deviceTensors[k] = createDeviceTensor(sources[k], true);
-    }
-
-    // second, move the tensor array itself to the device
-    cudaMalloc((void**)&deviceArrayOfDeviceTensors, size);
-    if (copy)
-        cudaMemcpy(deviceArrayOfDeviceTensors, deviceTensors, size, cudaMemcpyHostToDevice);
-
-    free(deviceTensors);
-
-    return deviceArrayOfDeviceTensors;
-}
-
 __device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y) {
     // using lecture notes as a basis for this function
     double pixelValue = 0.0;
 
-    // note that z is the same for both the filter and the input
+    // note that z is the same for both the filter andand the input
     int start_x = out_x - (filter.width/2);
     int start_y = out_y - (filter.height/2);
 
@@ -106,6 +85,18 @@ __global__ void Conv(const Tensor input, Tensor output, const Tensor filters[fil
         if (out_x < output.width && out_y < output.height) {
             double pixelValue = convolveWithFilter(input, filters[out_z], out_x, out_y);
             setCellValue(output, pixelValue, out_x, out_y, out_z);
+        }
+    }
+}
+
+__host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) {
+    for (int z=0; z < z_lim; ++z) {
+        printf("\n\n\nDepth=%d", z);
+        for (int y=0; y < y_lim; ++y) {
+            printf("\n");
+            for (int x=0; x < x_lim; ++x) {
+                printf("%d ", cellValueHost(source, x, y, z));
+            }
         }
     }
 }
