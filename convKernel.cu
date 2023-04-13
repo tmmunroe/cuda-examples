@@ -1,4 +1,5 @@
 #include "convKernel.h"
+#include <stdio.h>
 
 __device__ void setCellValue(const Tensor target, double value, int x, int y, int z) {
     target.elements[x + y*target.stride + z*target.layerStride] = value;
@@ -44,7 +45,11 @@ Tensor createHostTensor(int width, int height, int depth){
   tensor.layerStride = width*height;
 
   size_t size = width * height * depth * sizeof(double);
+  // printf("Creating tensor with dims (%d, %d, %d) and size %zu\n", width, height, depth, size);
   tensor.elements = (double*)malloc(size);
+
+  // printf("Created tensor with dims (%d, %d, %d) and size %zu\n", width, height, depth, size);
+
   return tensor;
 }
 
