@@ -96,7 +96,7 @@ __global__ void Conv(const Tensor input, Tensor output, const Tensor filters[fil
 
 __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) {
     for (int z=0; z < z_lim; ++z) {
-        printf("\n\n\nDepth=%d", z);
+        printf("\nDepth=%d", z);
         for (int y=0; y < y_lim; ++y) {
             printf("\n");
             for (int x=0; x < x_lim; ++x) {
@@ -104,4 +104,5 @@ __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) 
             }
         }
     }
+    print("\n");
 }
