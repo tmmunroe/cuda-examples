@@ -88,7 +88,7 @@ int main(int argc, char ** argv) {
     }
     // create device array of tensors with device tensors
     Tensor * device_filters_device_array;
-    cudaMalloc((void**)device_filters_device_array, filterCount*sizeof(Tensor));
+    cudaMalloc((void**)&device_filters_device_array, filterCount*sizeof(Tensor));
     cudaMemcpy(device_filters_device_array, device_filters, filterCount*sizeof(Tensor), cudaMemcpyHostToDevice);
     
 
@@ -100,7 +100,7 @@ int main(int argc, char ** argv) {
     initialize_timer();
     start_timer();
 
-    Conv<<<dimGrid, dimBlock>>>(device_input, device_output, device_filters);
+    Conv<<<dimGrid, dimBlock>>>(device_input, device_output, device_filters_device_array);
 
     // Compute and return elapsed time 
     stop_timer();
