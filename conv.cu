@@ -117,9 +117,9 @@ int main(int argc, char ** argv) {
             for (int x = 0; x < output.width; ++x) {
                 if (x > 0 && y > 0 && x < output.width-2 && y < output.height-2) {
                     expectedValue = 27;
-                } else if (x > 0 || x < output.width-2) {
+                } else if (x > 0 && x < output.width-2) {
                     expectedValue = 18;
-                } else if (y > 0 || y < output.height-2) {
+                } else if (y > 0 && y < output.height-2) {
                     expectedValue = 18;
                 } else { // both edges are off input grid
                     expectedValue = 12;
