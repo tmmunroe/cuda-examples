@@ -1,7 +1,7 @@
 #include "convKernel.h"
 #include <stdio.h>
 
-__device__ void setCellValue(const Tensor target, double value, int x, int y, int z) {
+__device__ void setCellValue(Tensor target, double value, int x, int y, int z) {
     target.elements[x + y*target.stride + z*target.layerStride] = value;
 }
 
@@ -9,7 +9,7 @@ __device__ double cellValue(const Tensor source, int x, int y, int z) {
     return source.elements[x + y*source.stride + z*source.layerStride];
 }
 
-__host__ void setCellValueHost(const Tensor target, double value, int x, int y, int z) {
+__host__ void setCellValueHost(Tensor target, double value, int x, int y, int z) {
     target.elements[x + y*target.stride + z*target.layerStride] = value;
 }
 
@@ -100,7 +100,7 @@ __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) 
         for (int y=0; y < y_lim; ++y) {
             printf("\n");
             for (int x=0; x < x_lim; ++x) {
-                printf("%d ", cellValueHost(source, x, y, z));
+                printf("%lf ", cellValueHost(source, x, y, z));
             }
         }
     }

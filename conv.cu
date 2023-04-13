@@ -40,7 +40,7 @@ int main(int argc, char ** argv) {
     double value;
     double testFillValue(1.0);
     double expectedValue(9.0);
-    printf("Filling input\n");
+    printf("Filling input with %lf\n", testFillValue);
     for (int c = 0; c < input.depth; ++c) {
         for (int y = 0; y < input.height; ++y) {
             for (int x = 0; x < input.width; ++x) {
