@@ -86,7 +86,13 @@ int main(int argc, char ** argv) {
     for (int k = 0; k < filterCount; ++k) {
         device_filters[k] = createDeviceTensor(filters[k], true);
     }
+    // create device array of tensors with device tensors
+    Tensor * device_filters_device_array;
+    cudaMalloc((void**)device_filters_device_array, filterCount*sizeof(Tensor));
+    cudaMemcpy(device_filters_device_array, device_filters, filterCount*sizeof(Tensor), cudaMemcpyHostToDevice);
     
+
+    //define dimensions
     dim3 dimBlock(blockSize, blockSize);
     dim3 dimGrid(device_output.width/blockSize, device_output.height/blockSize);
 
