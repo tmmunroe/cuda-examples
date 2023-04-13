@@ -45,8 +45,11 @@ Tensor createHostTensor(int width, int height, int depth){
   tensor.layerStride = width*height;
 
   size_t size = width * height * depth * sizeof(double);
-  printf("Creating tensor with dims (%d, %d, %d) and size %f\n", width, height, depth, size);
+  // printf("Creating tensor with dims (%d, %d, %d) and size %zu\n", width, height, depth, size);
   tensor.elements = (double*)malloc(size);
+
+  // printf("Created tensor with dims (%d, %d, %d) and size %zu\n", width, height, depth, size);
+
   return tensor;
 }
 

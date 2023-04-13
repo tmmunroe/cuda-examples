@@ -38,10 +38,12 @@ int main(int argc, char ** argv) {
         filters[k] = createHostTensor(filterWidth, filterHeight, filterDepth);
     }
 
+    printf("Created all tensors\n");
     // initialize input tensor and filters with values
     double value;
     double testFillValue(1.0);
     double expectedValue(9.0);
+    printf("Filling input\n");
     for (int c = 0; c < input.depth; ++c) {
         for (int y = 0; y < input.height; ++y) {
             for (int x = 0; x < input.width; ++x) {
@@ -54,11 +56,12 @@ int main(int argc, char ** argv) {
         }
     }
 
+    printf("Filling filters\n");
     for (int k = 0; k < filterCount; ++k) {
         Tensor filter = filters[k];
-        for (int c = 0; c < input.depth; ++c) {
-            for (int y = 0; y < input.height; ++y) {
-                for (int x = 0; x < input.width; ++x) {
+        for (int c = 0; c < filter.depth; ++c) {
+            for (int y = 0; y < filter.height; ++y) {
+                for (int x = 0; x < filter.width; ++x) {
 
                     //F[k, c, i, j] = (c + k) · (i + j)
                     // value = (c+k)*double(x+y);
