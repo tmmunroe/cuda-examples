@@ -104,5 +104,5 @@ __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) 
             }
         }
     }
-    print("\n");
+    printf("\n");
 }
