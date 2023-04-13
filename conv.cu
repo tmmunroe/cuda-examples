@@ -127,7 +127,7 @@ int main(int argc, char ** argv) {
 
                 value = cellValueHost(output, x, y, c);
                 if (fabs(value - expectedValue) > 1e-5) {
-                    printf("Error at (%d, %d, %d).. value %lf, expected %lf", x, y, c, value, expectedValue);
+                    printf("Error at (%d, %d, %d).. value %lf, expected %lf\n", x, y, c, value, expectedValue);
                     ++errors;
                 }
             }
