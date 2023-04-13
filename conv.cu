@@ -39,7 +39,6 @@ int main(int argc, char ** argv) {
     // initialize input tensor and filters with values
     double value;
     double testFillValue(1.0);
-    double expectedValue(9.0);
     printf("Filling input with %lf\n", testFillValue);
     for (int c = 0; c < input.depth; ++c) {
         for (int y = 0; y < input.height; ++y) {
@@ -112,9 +111,20 @@ int main(int argc, char ** argv) {
 
     // check result
     int errors = 0;
+    double expectedValue(9.0);
     for (int c = 0; c < output.depth; ++c) {
         for (int y = 0; y < output.height; ++y) {
             for (int x = 0; x < output.width; ++x) {
+                if (x > 0 && y > 0) {
+                    expectedValue = 27;
+                } else if (x > 0) {
+                    expectedValue = 18;
+                } else if (y > 0) {
+                    expectedValue = 18;
+                } else { // both edges are off input grid
+                    expectedValue = 12;
+                }
+
                 value = cellValueHost(output, x, y, c);
                 if (fabs(value - expectedValue) > 1e-5) {
                     ++errors;
