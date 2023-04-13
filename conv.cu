@@ -35,6 +35,7 @@ int main(int argc, char ** argv) {
         filters[k] = createHostTensor(filterWidth, filterHeight, filterDepth);
     }
 
+
     printf("Created all tensors\n");
     // initialize input tensor and filters with values
     double value;
