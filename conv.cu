@@ -115,11 +115,11 @@ int main(int argc, char ** argv) {
     for (int c = 0; c < output.depth; ++c) {
         for (int y = 0; y < output.height; ++y) {
             for (int x = 0; x < output.width; ++x) {
-                if (x > 0 && y > 0 && x < output.width-2 && y < output.height-2) {
+                if (x > 0 && y > 0 && x < output.width-1 && y < output.height-1) {
                     expectedValue = 27;
-                } else if (x > 0 && x < output.width-2) {
+                } else if (x > 0 && x < output.width-1) {
                     expectedValue = 18;
-                } else if (y > 0 && y < output.height-2) {
+                } else if (y > 0 && y < output.height-1) {
                     expectedValue = 18;
                 } else { // both edges are off input grid
                     expectedValue = 12;
