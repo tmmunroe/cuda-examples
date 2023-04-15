@@ -17,6 +17,18 @@ __host__ double cellValueHost(const Tensor source, int x, int y, int z) {
     return source.elements[x + y*source.stride + z*source.layerStride];
 }
 
+__device__ Tensor cnnSubTensor(const Tensor source, int x, int y, int blockWidth, int blockHeight) {
+    Tensor sub;
+    sub.width = blockWidth;
+    sub.height = blockHeight;
+    sub.depth = source.depth;
+
+    sub.stride = source.stride;
+    sub.layerStride = source.layerStride;
+
+    sub.elements = &source.elements[source.stride * blockHeight * y + blockWidth * x];
+    return sub;
+}
 
 Tensor createDeviceTensor(const Tensor source, bool copy) {
   // Create a new matrix in device memory.
@@ -113,13 +125,13 @@ Tensor createHostTensor(const TensorDescriptor tensorDescriptor) {
     return createHostTensor(tensorDescriptor.width, tensorDescriptor.height, tensorDescriptor.depth);
 }
 
-__device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y) {
+__device__ double convolveWithFilter(const Tensor input, const Tensor filter, int x, int y) {
     // using lecture notes as a basis for this function
     double pixelValue = 0.0;
 
     // note that z is the same for both the filter andand the input
-    int start_x = out_x - (filter.width/2);
-    int start_y = out_y - (filter.height/2);
+    int start_x = x - (filter.width/2);
+    int start_y = y - (filter.height/2);
 
     // note that z is the same for both the filter and the input
     for (int z = 0; z < filter.depth; ++z) {
@@ -140,6 +152,36 @@ __device__ double convolveWithFilter(const Tensor input, const Tensor filter, in
 
     return pixelValue;
 }
+
+__global__ void ConvTiled(const Tensor input, Tensor output, const Tensor * filters) {
+    // declare shared
+    __shared__ double filters[64][3][3][3];
+    __shared__ double shared_input[BLOCK_SIZE+1][BLOCK_SIZE+1][3];
+
+
+    int threadId = threadIdx.y * blockDim.x + threadIdx.x;
+    int out_x = blockIdx.x * blockDim.x + threadIdx.x;
+    int out_y = blockIdx.y * blockDim.y + threadIdx.y;
+    int filterCount = output.depth;
+
+    // copy filters and inputs to shared memory
+    for (int out_z = 0; out_z < filterCount; ++out_z) {
+        int k = threadId 
+    }
+
+    // 
+
+    // convolve for each filter
+    for (int out_z = 0; out_z < filterCount; ++out_z) {
+
+        if (out_x < output.width && out_y < output.height) {
+            double pixelValue = convolveWithFilter(input, filters[out_z], out_x, out_y);
+            setCellValue(output, pixelValue, out_x, out_y, out_z);
+        }
+    }
+
+}
+
 
 __global__ void Conv(const Tensor input, Tensor output, const Tensor * filters) {
     // int threadId = threadIdx.y * blockDim.x + threadIdx.x;

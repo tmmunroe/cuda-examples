@@ -161,12 +161,14 @@ int main(int argc, char ** argv) {
     //define dimensions
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
     dim3 dimGrid(device_output.width/BLOCK_SIZE, device_output.height/BLOCK_SIZE);
+    cudaDeviceSynchronize();
 
     // Initialize timer  
     initialize_timer();
     start_timer();
 
     Conv<<<dimGrid, dimBlock>>>(device_input, device_output, deviceFilters);
+    cudaDeviceSynchronize();
 
     // Compute and return elapsed time 
     stop_timer();

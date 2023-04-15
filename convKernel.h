@@ -24,9 +24,14 @@ typedef struct {
 } Tensor;
 
 __global__ void Conv(const Tensor input, Tensor output, const Tensor * filters);
+__global__ void ConvTiled(const Tensor input, Tensor output, const Tensor * filters);
+
 __device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y);
 __device__ void setCellValue(const Tensor target, double value, int x, int y, int z);
 __device__ double cellValue(const Tensor source, int x, int y, int z);
+__device__ Tensor cnnSubTensor(const Tensor source, int x, int y, int z,
+                            int blockWidth, int blockHeight);
+
 __host__ void setCellValueHost(const Tensor target, double value, int x, int y, int z);
 __host__ double cellValueHost(const Tensor source, int x, int y, int z);
 __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim);
