@@ -45,7 +45,7 @@ Tensor * createHostTensors(const TensorDescriptor tensorDescriptor, int count) {
 
 void freeHostTensors(Tensor * hostTensors, int count) {
     for (int i = 0; i < count; ++i) {
-        free(hostTensors->elements);
+        free(hostTensors[i].elements);
     }
 }
 
