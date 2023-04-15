@@ -182,7 +182,7 @@ int main(int argc, char ** argv) {
         checkTestResults(output);
     } else {
         double checksum = calculateChecksum(output);
-        printf("%lf,%0.3lf", checksum, seconds2milliseconds(time));
+        printf("%0.2lf,%0.3lf\n", checksum, seconds2milliseconds(time));
     }
 
     // cleanup
