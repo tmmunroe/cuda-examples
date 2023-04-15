@@ -18,7 +18,7 @@ __host__ double cellValueHost(const Tensor source, int x, int y, int z) {
 }
 
 
-Tensor createDeviceTensor(Tensor source, bool copy) {
+Tensor createDeviceTensor(const Tensor source, bool copy) {
   // Create a new matrix in device memory.
   Tensor tensor;
   tensor.width = source.width;
@@ -34,6 +34,62 @@ Tensor createDeviceTensor(Tensor source, bool copy) {
 
   return tensor;
 }
+
+Tensor * createHostTensors(const TensorDescriptor tensorDescriptor, int count) {
+    Tensor * tensors = (Tensor*) malloc(sizeof(Tensor)*count);
+    for (int i = 0; i<count; ++i) {
+        tensors[i] = createHostTensor(tensorDescriptor);
+    }
+    return tensors;
+}
+
+void freeHostTensors(Tensor * hostTensors, int count) {
+    for (int i = 0; i < count; ++i) {
+        free(hostTensors->elements);
+    }
+}
+
+Tensor * createDeviceTensors(const Tensor * sources, int count, bool copy) {
+    // this is a two step procedure where we first create the device tensors in
+    //  a host array; and then we create the device array containing those device tensors
+
+    // create device tensors for filters
+    Tensor * device_tensors = (Tensor*) malloc(sizeof(Tensor)*count);
+    for (int k = 0; k < count; ++k) {
+        device_tensors[k] = createDeviceTensor(sources[k], true);
+    }
+
+    // create device array of tensors with device tensors
+    Tensor * device_tensors_device_array;
+    cudaMalloc((void**)&device_tensors_device_array, count*sizeof(Tensor));
+    cudaMemcpy(device_tensors_device_array, device_tensors, count*sizeof(Tensor), cudaMemcpyHostToDevice);
+    cudaDeviceSynchronize();
+
+    // free host array
+    free(device_tensors);
+
+    return device_tensors_device_array;
+}
+
+void freeDeviceTensors(Tensor * tensors, int count) {
+    // this is a four step procedure where we
+    // 1) create a host array pointing to the device tensors
+    // 2) iterate over the host array to free the device tensor element arrays
+    // 3) free the device array that was passed in
+    // 4) free the host array we used to access the device tensors
+    size_t size = sizeof(Tensor)*count;
+
+    Tensor * device_tensors_host_array = (Tensor*) malloc(size);
+    cudaMemcpy(device_tensors_host_array, tensors, size, cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < count; ++i) {
+        cudaFree(device_tensors_host_array[i].elements);
+    }
+
+    cudaFree(tensors);
+    free(device_tensors_host_array);
+}
+
 
 // Create a matrix in host memory.
 Tensor createHostTensor(int width, int height, int depth){
@@ -51,6 +107,10 @@ Tensor createHostTensor(int width, int height, int depth){
   // printf("Created tensor with dims (%d, %d, %d) and size %zu\n", width, height, depth, size);
 
   return tensor;
+}
+
+Tensor createHostTensor(const TensorDescriptor tensorDescriptor) {
+    return createHostTensor(tensorDescriptor.width, tensorDescriptor.height, tensorDescriptor.depth);
 }
 
 __device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y) {
@@ -81,10 +141,11 @@ __device__ double convolveWithFilter(const Tensor input, const Tensor filter, in
     return pixelValue;
 }
 
-__global__ void Conv(const Tensor input, Tensor output, const Tensor filters[filterCount]) {
+__global__ void Conv(const Tensor input, Tensor output, const Tensor * filters) {
     // int threadId = threadIdx.y * blockDim.x + threadIdx.x;
     int out_x = blockIdx.x * blockDim.x + threadIdx.x;
     int out_y = blockIdx.y * blockDim.y + threadIdx.y;
+    int filterCount = output.depth;
 
     for (int out_z = 0; out_z < filterCount; ++out_z) {
         if (out_x < output.width && out_y < output.height) {

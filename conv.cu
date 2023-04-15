@@ -18,101 +18,62 @@ F[k, c, i, j] = (c + k) · (i + j)
 The output tensor O with dimensions: K,W,H
 */
 
-int main(int argc, char ** argv) {
-    // const int inChannels(3), inHeight(1024), inWidth(1024);
-    // const int outChannels(64), outHeight(1024), outWidth(1024);
-    // const int filterHeight(3), filterWidth(3);
-    // const int filterDepth(inChannels), filterCount(outChannels);
+double seconds2milliseconds(double seconds) {
+    return seconds*1000;
+}
 
-    double time;
-    // create tensors for input and output
-    Tensor input = createHostTensor(inWidth, inHeight, inChannels);
-    Tensor output = createHostTensor(outWidth, outHeight, outChannels);
-
-    // create tensors for filters
-    Tensor filters[filterCount];
-    for (int k = 0; k < filterCount; ++k) {
-        filters[k] = createHostTensor(filterWidth, filterHeight, filterDepth);
-    }
-
-
-    printf("Created all tensors\n");
-    // initialize input tensor and filters with values
+void fillInput(Tensor tensor) {
     double value;
-    double testFillValue(1.0);
-    printf("Filling input with %lf\n", testFillValue);
-    for (int c = 0; c < input.depth; ++c) {
-        for (int y = 0; y < input.height; ++y) {
-            for (int x = 0; x < input.width; ++x) {
-                // I[c, x, y] = c · (x + y)
-                // value = c*double(x+y);
-                // setCellValueHost(input, value, x, y, c);
-                setCellValueHost(input, testFillValue, x, y, c);
-
+    for (int c = 0; c < tensor.depth; ++c) {
+        for (int y = 0; y < tensor.height; ++y) {
+            for (int x = 0; x < tensor.width; ++x) {
+                value = c*double(x+y);
+                setCellValueHost(tensor, value, x, y, c);
             }
         }
     }
+}
 
-    printf("Filling filters\n");
-    for (int k = 0; k < filterCount; ++k) {
-        Tensor filter = filters[k];
-        for (int c = 0; c < filter.depth; ++c) {
-            for (int y = 0; y < filter.height; ++y) {
-                for (int x = 0; x < filter.width; ++x) {
-
-                    //F[k, c, i, j] = (c + k) · (i + j)
-                    // value = (c+k)*double(x+y);
-                    // setCellValueHost(filter, value, x, y, c);
-
-                    setCellValueHost(filter, testFillValue, x, y, c);
-                }
+void fillFilter(Tensor tensor, int k) {
+    double value;
+    for (int c = 0; c < tensor.depth; ++c) {
+        for (int y = 0; y < tensor.height; ++y) {
+            for (int x = 0; x < tensor.width; ++x) {
+                value = (c+k)*double(x+y);
+                setCellValueHost(tensor, value, x, y, c);
             }
         }
     }
-    printf("Section of filter: ");
-    printTensor(filters[0], 3, 3, 3);
+}
 
-    printf("Section of input: ");
-    printTensor(input, 3, 3, 3);
-
-
-
-    // create tensors on device
-    Tensor device_input = createDeviceTensor(input, true);
-    Tensor device_output = createDeviceTensor(output, false);
-
-    // create tensors for filters on device
-    Tensor device_filters[filterCount];
-    for (int k = 0; k < filterCount; ++k) {
-        device_filters[k] = createDeviceTensor(filters[k], true);
+void fillOnes(Tensor tensor) {
+    for (int c = 0; c < tensor.depth; ++c) {
+        for (int y = 0; y < tensor.height; ++y) {
+            for (int x = 0; x < tensor.width; ++x) {
+                setCellValueHost(tensor, 1.0, x, y, c);
+            }
+        }
     }
-    // create device array of tensors with device tensors
-    Tensor * device_filters_device_array;
-    cudaMalloc((void**)&device_filters_device_array, filterCount*sizeof(Tensor));
-    cudaMemcpy(device_filters_device_array, device_filters, filterCount*sizeof(Tensor), cudaMemcpyHostToDevice);
-    
+}
 
-    //define dimensions
-    dim3 dimBlock(blockSize, blockSize);
-    dim3 dimGrid(device_output.width/blockSize, device_output.height/blockSize);
+double calculateChecksum(Tensor output) {
+    double checksum(0);
+    for (int z=0; z<output.depth; ++z) {
+        for (int y=0; y<output.height; ++y) {
+            for (int x=0; x<output.width; ++x) {
+                checksum += cellValueHost(output, x, y, z);
+            }
+        }
+    }
+    return checksum;
+}
 
-    // Initialize timer  
-    initialize_timer();
-    start_timer();
-
-    Conv<<<dimGrid, dimBlock>>>(device_input, device_output, device_filters_device_array);
-
-    // Compute and return elapsed time 
-    stop_timer();
-    time = elapsed_time();
-
-    // copy to host
-    size_t size = output.width * output.height * output.depth * sizeof(double);
-    cudaMemcpy(output.elements, device_output.elements, size, cudaMemcpyDeviceToHost);
-
+void checkTestResults(Tensor output) {
     // check result
+    double value;
+    double expectedValue;
+
     int errors = 0;
-    double expectedValue(9.0);
     for (int c = 0; c < output.depth; ++c) {
         for (int y = 0; y < output.height; ++y) {
             for (int x = 0; x < output.width; ++x) {
@@ -144,17 +105,92 @@ int main(int argc, char ** argv) {
     } else {
         std::cout << "Test PASSED" << std::endl;
     }
+}
+
+int main(int argc, char ** argv) {
+    double time;
+
+    // tensor specifications
+    const TensorDescriptor inputDescriptor{1024, 1024, 3};
+    const TensorDescriptor outputDescriptor{1024, 1024, 64};
+    const TensorDescriptor filterDescriptor{3, 3, inputDescriptor.depth};
+    const int filterCount(outputDescriptor.depth);
+
+    bool isTestCase = false;
+    bool verbose = false;
+    if (argc > 2) {
+        isTestCase = std::string("test") == argv[1];
+        verbose = std::string("verbose") == argv[2];
+    } else if (argc > 1) {
+        isTestCase = std::string("test") == argv[1];
+    }
+
+    // create tensors for input, output, and an array of tensors for the filters
+    Tensor input = createHostTensor(inputDescriptor);
+    Tensor output = createHostTensor(outputDescriptor);
+    Tensor * filters = createHostTensors(filterDescriptor, filterCount);
+
+    printf("Created all tensors\n");
+    // initialize input tensor and filters with values
+    if (isTestCase) {
+        std::cout << "filling with test case values..." << std::endl;
+        fillOnes(input);
+        for (int k = 0; k < filterCount; ++k) {
+            fillOnes(filters[k]);
+        }
+    } else {
+        fillInput(input);
+        for (int k = 0; k < filterCount; ++k) {
+            fillFilter(filters[k], k);
+        }
+    }
+
+    if (verbose) {
+        printf("Section of filter: ");
+        printTensor(filters[0], 3, 3, 3);
+
+        printf("Section of input: ");
+        printTensor(input, 3, 3, 3);
+    }
+
+    // create tensors on device
+    Tensor device_input = createDeviceTensor(input, true);
+    Tensor device_output = createDeviceTensor(output, false);
+    Tensor * deviceFilters = createDeviceTensors(filters, filterCount, true);
+
+    //define dimensions
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 dimGrid(device_output.width/BLOCK_SIZE, device_output.height/BLOCK_SIZE);
+
+    // Initialize timer  
+    initialize_timer();
+    start_timer();
+
+    Conv<<<dimGrid, dimBlock>>>(device_input, device_output, deviceFilters);
+
+    // Compute and return elapsed time 
+    stop_timer();
+    time = elapsed_time();
+
+    // copy to host
+    size_t size = output.width * output.height * output.depth * sizeof(double);
+    cudaMemcpy(output.elements, device_output.elements, size, cudaMemcpyDeviceToHost);
+
+    // check result
+    if (isTestCase) {
+        printf("Checking test results...\n");
+        checkTestResults(output);
+    } else {
+        double checksum = calculateChecksum(output);
+        printf("%lf,%0.3lf", checksum, seconds2milliseconds(time));
+    }
 
     // cleanup
     free(input.elements);
     free(output.elements);
-    for (int c = 0; c < filterCount; ++c) {
-        free(filters[c].elements);
-    }
+    freeHostTensors(filters, filterCount);
 
     cudaFree(device_input.elements);
     cudaFree(device_output.elements);
-    for (int c = 0; c < filterCount; ++c) {
-        cudaFree(device_filters[c].elements);
-    }
+    freeDeviceTensors(deviceFilters, filterCount);
 }
