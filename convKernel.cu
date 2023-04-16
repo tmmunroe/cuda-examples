@@ -97,6 +97,34 @@ __host__ __device__ Tensor tensorSubBlock(const Tensor source,
     return sub;
 };
 
+__host__ __device__ Tensor tensorLayer(const Tensor source, int dim, int idx) {
+    if (dim < 1 || dim > source.dim) {
+        return Tensor{};
+    }
+
+    if (dim == 1) {
+        return tensorSubBlock(
+            source,
+            0, source.dims[0],
+            idx, source.dims[1]
+        );
+    } else if (dim == 2) {
+        return tensorSubBlock(
+            source,
+            0, source.dims[0],
+            0, source.dims[1],
+            idx, source.dims[2]
+        );
+    } else if (dim == 4) {
+        return tensorSubBlock(
+            source,
+            0, source.dims[0],
+            0, source.dims[1],
+            0, source.dims[2],
+            idx, source.dims[3]
+        );
+    }
+}
 
 Tensor createDeviceTensor(const Tensor source, bool copy) {
   // Create a new matrix in device memory.

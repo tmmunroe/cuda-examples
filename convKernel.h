@@ -52,6 +52,9 @@ __host__ __device__ Tensor tensorSubBlock(const Tensor source,
     int idx2, int dim2,
     int idx3, int dim3);
 
+__host__ __device__ Tensor tensorLayer(const Tensor source, int dim, int idx);
+
+
 __device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y);
 __device__ Tensor cnnSubTensor(const Tensor source, int x, int y, int z,
                             int blockWidth, int blockHeight);
