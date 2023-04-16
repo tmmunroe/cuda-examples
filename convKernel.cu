@@ -251,11 +251,11 @@ __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) 
     printf("Dim: %d\n", source.dim);
     printf("Dims: ");
     for (int i=0; i < source.dim; ++i) {
-        printf("%d, ", source.dims[i]);
+        printf("%d: %d, ", i, source.dims[i]);
     }
     printf("\nStrides: ");
     for (int i=0; i < source.dim; ++i) {
-        printf("%d, ", source.strides[i]);
+        printf("%d: %d, ", i, source.strides[i]);
     }
     printf("\n");
 
