@@ -2,39 +2,39 @@
 #include <stdio.h>
 
 
-__global__ int dim(Tensor tensor, int dim) {
+__host__ __device__ int dim(Tensor tensor, int dim) {
     return tensor.dims[dim];
 }
 
-__global__ int stride(Tensor tensor, int dim) {
+__host__ __device__ int stride(Tensor tensor, int dim) {
     return tensor.strides[dim];
 }
 
-__global__ int offset(Tensor tensor, int d0, int d1) {
+__host__ __device__ int offset(Tensor tensor, int d0, int d1) {
     return d0 + tensor.strides[0]*d1;
 }
 
-__global__ int offset(Tensor tensor, int d0, int d1, int d2) {
+__host__ __device__ int offset(Tensor tensor, int d0, int d1, int d2) {
     return d0 + tensor.strides[0]*d1 + tensor.strides[1]*d2;
 }
 
-__global__ int offset(Tensor tensor, int d0, int d1, int d2, int d3) {
+__host__ __device__ int offset(Tensor tensor, int d0, int d1, int d2, int d3) {
     return d0 + tensor.strides[0]*d1 + tensor.strides[1]*d2 + tensor.strides[2]*d3;
 }
 
-__global__ double cellValue(Tensor tensor, int d0, int d1, int d2) {
+__host__ __device__ double cellValue(Tensor tensor, int d0, int d1, int d2) {
     return tensor.elements[offset(tensor, d0, d1, d2)];
 }
 
-__global__ double cellValue(Tensor tensor, int d0, int d1, int d2, int d3) {
+__host__ __device__ double cellValue(Tensor tensor, int d0, int d1, int d2, int d3) {
     return tensor.elements[offset(tensor, d0, d1, d2, d3)];
 }
 
-__global__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2) {
+__host__ __device__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2) {
     tensor.elements[offset(tensor, d0, d1, d2)] = value;
 }
 
-__global__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2, int d3) {
+__host__ __device__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2, int d3) {
     tensor.elements[offset(tensor, d0, d1, d2, d3)] = value;
 }
 
@@ -51,7 +51,7 @@ __global__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2
 //     return sub;
 // }
 
-__global__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int idx1, int dim1) {
+__host__ __device__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int idx1, int dim1) {
     Tensor sub;
     sub.dim = 2;
     for (int d=0; d<source.dim; ++d) {
@@ -64,7 +64,7 @@ __global__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int id
     return sub;
 };
 
-__global__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int idx1, int dim1, int idx2, int dim2) {
+__host__ __device__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int idx1, int dim1, int idx2, int dim2) {
     Tensor sub;
     sub.dim = 3;
     for (int d=0; d<source.dim; ++d) {
@@ -78,7 +78,7 @@ __global__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int id
     return sub;
 };
 
-__global__ Tensor tensorSubBlock(const Tensor source,
+__host__ __device__ Tensor tensorSubBlock(const Tensor source,
     int idx0, int dim0,
     int idx1, int dim1,
     int idx2, int dim2,
@@ -209,7 +209,7 @@ __global__ void Conv(const Tensor input, Tensor output, const Tensor filters) {
             0, filters.dims[1],
             0, filters.dims[2],
             out_z, 1);
-            
+
         if (out_x < output.dims[0] && out_y < output.dims[1]) {
             double pixelValue = convolveWithFilter(input, filter, out_x, out_y);
             setCellValue(output, pixelValue, out_x, out_y, out_z);
@@ -223,7 +223,7 @@ __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) 
         for (int y=0; y < y_lim; ++y) {
             printf("\n");
             for (int x=0; x < x_lim; ++x) {
-                printf("%lf ", cellValueHost(source, x, y, z));
+                printf("%lf ", cellValue(source, x, y, z));
             }
         }
     }
