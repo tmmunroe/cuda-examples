@@ -122,6 +122,15 @@ void checkTestResults(Tensor output) {
 }
 
 int main(int argc, char ** argv) {
+    bool isTestCase = false;
+    bool verbose = false;
+    if (argc > 2) {
+        isTestCase = std::string("test") == argv[1];
+        verbose = std::string("verbose") == argv[2];
+    } else if (argc > 1) {
+        isTestCase = std::string("test") == argv[1];
+    }
+
     double time;
 
     // tensor specifications
@@ -132,13 +141,14 @@ int main(int argc, char ** argv) {
     const int filterCount(outputDescriptor.dims[2]);
     const TensorDescriptor filtersDescriptor{4, {3, 3, filterDepth, filterCount}};
 
-    bool isTestCase = false;
-    bool verbose = false;
-    if (argc > 2) {
-        isTestCase = std::string("test") == argv[1];
-        verbose = std::string("verbose") == argv[2];
-    } else if (argc > 1) {
-        isTestCase = std::string("test") == argv[1];
+    if (verbose) {
+        printf("\nInput Descriptor: \n");
+        printTensorDescriptor(inputDescriptor);
+        printf("\nOutput Descriptor: \n");
+        printTensorDescriptor(outputDescriptor);
+        printf("\nFilters Descriptor: \n");
+        printTensorDescriptor(filtersDescriptor);
+
     }
 
     // create tensors for input, output, and an array of tensors for the filters
