@@ -173,6 +173,7 @@ __device__ double convolveWithFilter(const Tensor input, const Tensor filter, in
     int width = filter.dims[0];
     int height = filter.dims[1];
     int depth = filter.dims[2];
+
     int start_x = x - (width/2);
     int start_y = y - (height/2);
 
@@ -233,12 +234,7 @@ __global__ void Conv(const Tensor input, Tensor output, const Tensor filters) {
     int filterCount = output.dims[2];
 
     for (int out_z = 0; out_z < filterCount; ++out_z) {
-        Tensor filter = tensorSubBlock(filters,
-            0, filters.dims[0],
-            0, filters.dims[1],
-            0, filters.dims[2],
-            out_z, 1);
-
+        Tensor filter = tensorLayer(filters, 4, out_z);
         if (out_x < output.dims[0] && out_y < output.dims[1]) {
             double pixelValue = convolveWithFilter(input, filter, out_x, out_y);
             setCellValue(output, pixelValue, out_x, out_y, out_z);
