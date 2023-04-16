@@ -55,7 +55,7 @@ __host__ __device__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim
     Tensor sub;
     sub.dim = 2;
     for (int d=0; d<source.dim; ++d) {
-        sub.strides[d] = sub.strides[d];
+        sub.strides[d] = source.strides[d];
     }
     sub.dims[0] = dim0;
     sub.dims[1] = dim1;
@@ -68,7 +68,7 @@ __host__ __device__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim
     Tensor sub;
     sub.dim = 3;
     for (int d=0; d<source.dim; ++d) {
-        sub.strides[d] = sub.strides[d];
+        sub.strides[d] = source.strides[d];
     }
     sub.dims[0] = dim0;
     sub.dims[1] = dim1;
@@ -86,7 +86,7 @@ __host__ __device__ Tensor tensorSubBlock(const Tensor source,
     Tensor sub;
     sub.dim = 4;
     for (int d=0; d<source.dim; ++d) {
-        sub.strides[d] = sub.strides[d];
+        sub.strides[d] = source.strides[d];
     }
     sub.dims[0] = dim0;
     sub.dims[1] = dim1;
