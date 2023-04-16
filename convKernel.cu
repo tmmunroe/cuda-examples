@@ -247,7 +247,7 @@ __global__ void Conv(const Tensor input, Tensor output, const Tensor filters) {
 
 __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) {
     printf("Tensor Specs:\n");
-    printf("Dim: %d\n", source.dims);
+    printf("Dim: %d\n", source.dim);
     printf("Dims: ");
     for (int i=0; i < source.dim; ++i) {
         printf("%d, ", source.dims[i]);
@@ -272,7 +272,7 @@ __host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim) 
 
 __host__ void printTensorDescriptor(const TensorDescriptor source) {
     printf("TensorDescriptor Specs:\n");
-    printf("Dim: %d\n", source.dims);
+    printf("Dim: %d\n", source.dim);
     printf("Dims: ");
     for (int i=0; i < source.dim; ++i) {
         printf("%d, ", source.dims[i]);
