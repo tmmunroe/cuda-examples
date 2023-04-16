@@ -1,45 +1,113 @@
 #include "convKernel.h"
 #include <stdio.h>
 
-__device__ void setCellValue(Tensor target, double value, int x, int y, int z) {
-    target.elements[x + y*target.stride + z*target.layerStride] = value;
+
+__global__ int dim(Tensor tensor, int dim) {
+    return tensor.dims[dim];
 }
 
-__device__ double cellValue(const Tensor source, int x, int y, int z) {
-    return source.elements[x + y*source.stride + z*source.layerStride];
+__global__ int stride(Tensor tensor, int dim) {
+    return tensor.strides[dim];
 }
 
-__host__ void setCellValueHost(Tensor target, double value, int x, int y, int z) {
-    target.elements[x + y*target.stride + z*target.layerStride] = value;
+__global__ int offset(Tensor tensor, int d0, int d1) {
+    return d0 + tensor.strides[0]*d1;
 }
 
-__host__ double cellValueHost(const Tensor source, int x, int y, int z) {
-    return source.elements[x + y*source.stride + z*source.layerStride];
+__global__ int offset(Tensor tensor, int d0, int d1, int d2) {
+    return d0 + tensor.strides[0]*d1 + tensor.strides[1]*d2;
 }
 
-__device__ Tensor cnnSubTensor(const Tensor source, int x, int y, int blockWidth, int blockHeight) {
+__global__ int offset(Tensor tensor, int d0, int d1, int d2, int d3) {
+    return d0 + tensor.strides[0]*d1 + tensor.strides[1]*d2 + tensor.strides[2]*d3;
+}
+
+__global__ double cellValue(Tensor tensor, int d0, int d1, int d2) {
+    return tensor.elements[offset(tensor, d0, d1, d2)];
+}
+
+__global__ double cellValue(Tensor tensor, int d0, int d1, int d2, int d3) {
+    return tensor.elements[offset(tensor, d0, d1, d2, d3)];
+}
+
+__global__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2) {
+    tensor.elements[offset(tensor, d0, d1, d2)] = value;
+}
+
+__global__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2, int d3) {
+    tensor.elements[offset(tensor, d0, d1, d2, d3)] = value;
+}
+
+// __device__ Tensor cnnSubTensor(const Tensor source, int x, int y, int blockWidth, int blockHeight) {
+//     Tensor sub;
+//     sub.width = blockWidth;
+//     sub.height = blockHeight;
+//     sub.depth = source.depth;
+
+//     sub.stride = source.stride;
+//     sub.layerStride = source.layerStride;
+
+//     sub.elements = &source.elements[source.stride * blockHeight * y + blockWidth * x];
+//     return sub;
+// }
+
+__global__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int idx1, int dim1) {
     Tensor sub;
-    sub.width = blockWidth;
-    sub.height = blockHeight;
-    sub.depth = source.depth;
+    sub.dim = 2;
+    for (int d=0; d<source.dim; ++d) {
+        sub.strides[d] = sub.strides[d];
+    }
+    sub.dims[0] = dim0;
+    sub.dims[1] = dim1;
 
-    sub.stride = source.stride;
-    sub.layerStride = source.layerStride;
-
-    sub.elements = &source.elements[source.stride * blockHeight * y + blockWidth * x];
+    sub.elements = &source.elements[offset(source, idx0, idx1)];
     return sub;
-}
+};
+
+__global__ Tensor tensorSubBlock(const Tensor source, int idx0, int dim0, int idx1, int dim1, int idx2, int dim2) {
+    Tensor sub;
+    sub.dim = 3;
+    for (int d=0; d<source.dim; ++d) {
+        sub.strides[d] = sub.strides[d];
+    }
+    sub.dims[0] = dim0;
+    sub.dims[1] = dim1;
+    sub.dims[2] = dim2;
+
+    sub.elements = &source.elements[offset(source, idx0, idx1, idx2)];
+    return sub;
+};
+
+__global__ Tensor tensorSubBlock(const Tensor source,
+    int idx0, int dim0,
+    int idx1, int dim1,
+    int idx2, int dim2,
+    int idx3, int dim3) {
+    Tensor sub;
+    sub.dim = 4;
+    for (int d=0; d<source.dim; ++d) {
+        sub.strides[d] = sub.strides[d];
+    }
+    sub.dims[0] = dim0;
+    sub.dims[1] = dim1;
+    sub.dims[2] = dim2;
+    sub.dims[3] = dim3;
+
+    sub.elements = &source.elements[offset(source, idx0, idx1, idx2, idx3)];
+    return sub;
+};
+
 
 Tensor createDeviceTensor(const Tensor source, bool copy) {
   // Create a new matrix in device memory.
   Tensor tensor;
-  tensor.width = source.width;
-  tensor.height = source.height;
-  tensor.depth = source.depth;
-  tensor.stride = source.width;
-  tensor.layerStride = source.layerStride;
+  tensor.dim = source.dim;
+  for (int i=0; i<source.dim; ++i) {
+    tensor.dims[i] = source.dims[i];
+    tensor.strides[i] = source.strides[i];
+  }
 
-  size_t size = source.width * source.height * source.depth * sizeof(double);
+  size_t size = tensor.strides[tensor.dim-1] * sizeof(double);
   cudaMalloc((void**) &tensor.elements, size);
   if (copy)
     cudaMemcpy(tensor.elements, source.elements, size, cudaMemcpyHostToDevice);
@@ -47,72 +115,19 @@ Tensor createDeviceTensor(const Tensor source, bool copy) {
   return tensor;
 }
 
-Tensor * createHostTensors(const TensorDescriptor tensorDescriptor, int count) {
-    Tensor * tensors = (Tensor*) malloc(sizeof(Tensor)*count);
-    for (int i = 0; i<count; ++i) {
-        tensors[i] = createHostTensor(tensorDescriptor);
-    }
-    return tensors;
-}
-
-void freeHostTensors(Tensor * hostTensors, int count) {
-    for (int i = 0; i < count; ++i) {
-        free(hostTensors[i].elements);
-    }
-}
-
-Tensor * createDeviceTensors(const Tensor * sources, int count, bool copy) {
-    // this is a two step procedure where we first create the device tensors in
-    //  a host array; and then we create the device array containing those device tensors
-
-    // create device tensors for filters
-    Tensor * device_tensors = (Tensor*) malloc(sizeof(Tensor)*count);
-    for (int k = 0; k < count; ++k) {
-        device_tensors[k] = createDeviceTensor(sources[k], true);
-    }
-
-    // create device array of tensors with device tensors
-    Tensor * device_tensors_device_array;
-    cudaMalloc((void**)&device_tensors_device_array, count*sizeof(Tensor));
-    cudaMemcpy(device_tensors_device_array, device_tensors, count*sizeof(Tensor), cudaMemcpyHostToDevice);
-    cudaDeviceSynchronize();
-
-    // free host array
-    free(device_tensors);
-
-    return device_tensors_device_array;
-}
-
-void freeDeviceTensors(Tensor * tensors, int count) {
-    // this is a four step procedure where we
-    // 1) create a host array pointing to the device tensors
-    // 2) iterate over the host array to free the device tensor element arrays
-    // 3) free the device array that was passed in
-    // 4) free the host array we used to access the device tensors
-    size_t size = sizeof(Tensor)*count;
-
-    Tensor * device_tensors_host_array = (Tensor*) malloc(size);
-    cudaMemcpy(device_tensors_host_array, tensors, size, cudaMemcpyDeviceToHost);
-
-    for (int i = 0; i < count; ++i) {
-        cudaFree(device_tensors_host_array[i].elements);
-    }
-
-    cudaFree(tensors);
-    free(device_tensors_host_array);
-}
-
-
 // Create a matrix in host memory.
-Tensor createHostTensor(int width, int height, int depth){
+Tensor createHostTensor(const TensorDescriptor tensorDescriptor){
   Tensor tensor;
-  tensor.width = width;
-  tensor.height = height;
-  tensor.depth = depth;
-  tensor.stride = width;
-  tensor.layerStride = width*height;
+  int stride = 1;
 
-  size_t size = width * height * depth * sizeof(double);
+  tensor.dim = tensorDescriptor.dim;
+  for (int i=0; i<tensorDescriptor.dim; ++i) {
+    tensor.dims[i] = tensorDescriptor.dims[i];
+    stride *= tensorDescriptor.dims[i];
+    tensor.strides[i] = stride;
+  }
+
+  size_t size = tensor.strides[tensor.dim-1] * sizeof(double);
   // printf("Creating tensor with dims (%d, %d, %d) and size %zu\n", width, height, depth, size);
   tensor.elements = (double*)malloc(size);
 
@@ -121,28 +136,27 @@ Tensor createHostTensor(int width, int height, int depth){
   return tensor;
 }
 
-Tensor createHostTensor(const TensorDescriptor tensorDescriptor) {
-    return createHostTensor(tensorDescriptor.width, tensorDescriptor.height, tensorDescriptor.depth);
-}
-
 __device__ double convolveWithFilter(const Tensor input, const Tensor filter, int x, int y) {
     // using lecture notes as a basis for this function
     double pixelValue = 0.0;
 
     // note that z is the same for both the filter andand the input
-    int start_x = x - (filter.width/2);
-    int start_y = y - (filter.height/2);
+    int width = filter.dims[0];
+    int height = filter.dims[1];
+    int depth = filter.dims[2];
+    int start_x = x - (width/2);
+    int start_y = y - (height/2);
 
     // note that z is the same for both the filter and the input
-    for (int z = 0; z < filter.depth; ++z) {
-        for(int dy = 0; dy < filter.height; ++dy) {
-            for(int dx = 0; dx < filter.width; ++dx) {
+    for (int z = 0; z < depth; ++z) {
+        for(int dy = 0; dy < height; ++dy) {
+            for(int dx = 0; dx < width; ++dx) {
                 int in_x = start_x + dx;
                 int in_y = start_y + dy;
                 
                 // Verify we are inside the boundaries width and height
-                if(in_x > -1 && in_x < input.width
-                    && in_y > -1 && in_y < input.height) {
+                if(in_x > -1 && in_x < input.dims[0]
+                    && in_y > -1 && in_y < input.dims[1]) {
                     //NOTE: we flip dy and dx when indexing into the filter in order to get the transpose of it
                     pixelValue += cellValue(input, in_x, in_y, z) * cellValue(filter, dy, dx, z);
                 }
@@ -153,45 +167,51 @@ __device__ double convolveWithFilter(const Tensor input, const Tensor filter, in
     return pixelValue;
 }
 
-__global__ void ConvTiled(const Tensor input, Tensor output, const Tensor * filters) {
-    // declare shared
-    __shared__ double filters[64][3][3][3];
-    __shared__ double shared_input[BLOCK_SIZE+1][BLOCK_SIZE+1][3];
+// __global__ void ConvTiled(const Tensor input, Tensor output, const Tensor filters) {
+//     // declare shared
+//     __shared__ double filters[64][3][3][3];
+//     __shared__ double shared_input[BLOCK_SIZE+1][BLOCK_SIZE+1][3];
 
 
-    int threadId = threadIdx.y * blockDim.x + threadIdx.x;
-    int out_x = blockIdx.x * blockDim.x + threadIdx.x;
-    int out_y = blockIdx.y * blockDim.y + threadIdx.y;
-    int filterCount = output.depth;
+//     int threadId = threadIdx.y * blockDim.x + threadIdx.x;
+//     int out_x = blockIdx.x * blockDim.x + threadIdx.x;
+//     int out_y = blockIdx.y * blockDim.y + threadIdx.y;
+//     int filterCount = output.depth;
 
-    // copy filters and inputs to shared memory
-    for (int out_z = 0; out_z < filterCount; ++out_z) {
-        int k = threadId 
-    }
+//     // copy filters and inputs to shared memory
+//     for (int out_z = 0; out_z < filterCount; ++out_z) {
+//         int k = threadId 
+//     }
 
-    // 
+//     // 
 
-    // convolve for each filter
-    for (int out_z = 0; out_z < filterCount; ++out_z) {
+//     // convolve for each filter
+//     for (int out_z = 0; out_z < filterCount; ++out_z) {
 
-        if (out_x < output.width && out_y < output.height) {
-            double pixelValue = convolveWithFilter(input, filters[out_z], out_x, out_y);
-            setCellValue(output, pixelValue, out_x, out_y, out_z);
-        }
-    }
+//         if (out_x < output.width && out_y < output.height) {
+//             double pixelValue = convolveWithFilter(input, filters[out_z], out_x, out_y);
+//             setCellValue(output, pixelValue, out_x, out_y, out_z);
+//         }
+//     }
 
-}
+// }
 
 
-__global__ void Conv(const Tensor input, Tensor output, const Tensor * filters) {
+__global__ void Conv(const Tensor input, Tensor output, const Tensor filters) {
     // int threadId = threadIdx.y * blockDim.x + threadIdx.x;
     int out_x = blockIdx.x * blockDim.x + threadIdx.x;
     int out_y = blockIdx.y * blockDim.y + threadIdx.y;
-    int filterCount = output.depth;
+    int filterCount = output.dims[2];
 
     for (int out_z = 0; out_z < filterCount; ++out_z) {
-        if (out_x < output.width && out_y < output.height) {
-            double pixelValue = convolveWithFilter(input, filters[out_z], out_x, out_y);
+        Tensor filter = tensorSubBlock(filters,
+            0, filters.dims[0],
+            0, filters.dims[1],
+            0, filters.dims[2],
+            out_z, 1);
+            
+        if (out_x < output.dims[0] && out_y < output.dims[1]) {
+            double pixelValue = convolveWithFilter(input, filter, out_x, out_y);
             setCellValue(output, pixelValue, out_x, out_y, out_z);
         }
     }
