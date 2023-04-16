@@ -134,12 +134,12 @@ int main(int argc, char ** argv) {
     double time;
 
     // tensor specifications
-    const TensorDescriptor inputDescriptor{3, {1024, 1024, 3}};
-    const TensorDescriptor outputDescriptor{3, {1024, 1024, 64}};
+    const TensorDescriptor inputDescriptor{.dim=3, .dims={1024, 1024, 3}};
+    const TensorDescriptor outputDescriptor{.dim=3, .dims={1024, 1024, 64}};
 
     const int filterDepth(inputDescriptor.dims[2]);
     const int filterCount(outputDescriptor.dims[2]);
-    const TensorDescriptor filtersDescriptor{4, {3, 3, filterDepth, filterCount}};
+    const TensorDescriptor filtersDescriptor{.dim=4, .dims={3, 3, filterDepth, filterCount}};
 
     if (verbose) {
         printf("\nInput Descriptor: \n");
