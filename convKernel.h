@@ -26,18 +26,18 @@ typedef struct {
 __global__ void Conv(const Tensor input, Tensor output, const Tensor filters);
 __global__ void ConvTiled(const Tensor input, Tensor output, const Tensor filters);
 
-__global__ int dim(Tensor tensor, int dim);
-__global__ int stride(Tensor tensor, int dim);
+__host__ __device__ int dim(Tensor tensor, int dim);
+__host__ __device__ int stride(Tensor tensor, int dim);
 
-__global__ int offset(Tensor tensor, int d0, int d1);
-__global__ int offset(Tensor tensor, int d0, int d1, int d2);
-__global__ int offset(Tensor tensor, int d0, int d1, int d2, int d3);
+__host__ __device__ int offset(Tensor tensor, int d0, int d1);
+__host__ __device__ int offset(Tensor tensor, int d0, int d1, int d2);
+__host__ __device__ int offset(Tensor tensor, int d0, int d1, int d2, int d3);
 
-__global__ double cellValue(Tensor tensor, int d0, int d1, int d2);
-__global__ double cellValue(Tensor tensor, int d0, int d1, int d2, int d3);
+__host__ __device__ double cellValue(Tensor tensor, int d0, int d1, int d2);
+__host__ __device__ double cellValue(Tensor tensor, int d0, int d1, int d2, int d3);
 
-__global__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2);
-__global__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2, int d3);
+__host__ __device__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2);
+__host__ __device__ void setCellValue(Tensor tensor, double value, int d0, int d1, int d2, int d3);
 
 
 
