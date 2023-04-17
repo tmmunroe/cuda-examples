@@ -147,7 +147,12 @@ void checkTestResults(Tensor output) {
 int main(int argc, char ** argv) {
     bool isTestCase = false;
     bool verbose = false;
-    if (argc > 2) {
+    std::string mode("simple");
+    if (argc > 3) {
+        isTestCase = std::string("test") == argv[1];
+        verbose = std::string("verbose") == argv[2];
+        mode = std::string(argv[3]);
+    } else if (argc > 2) {
         isTestCase = std::string("test") == argv[1];
         verbose = std::string("verbose") == argv[2];
     } else if (argc > 1) {
@@ -227,10 +232,10 @@ int main(int argc, char ** argv) {
     initialize_timer();
     start_timer();
 
-    if (true) { 
+    if (mode == "simple") { 
         // simple convolution
         Conv<<<dimGrid, dimBlock>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
-    } else {
+    } else if (mode == "tiled") {
         // tiled convolution
         int filterElementCount = elementsCount(filters);
         
@@ -241,8 +246,10 @@ int main(int argc, char ** argv) {
 
         int sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
         ConvTiled<<<dimGrid, dimBlock, sharedMemory>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    } else {
+        throw std::string("unrecognized mode: " + mode);
     }
-    
+
     cudaDeviceSynchronize();
 
     // Compute and return elapsed time 
