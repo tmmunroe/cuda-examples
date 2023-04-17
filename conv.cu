@@ -18,6 +18,15 @@ F[k, c, i, j] = (c + k) · (i + j)
 The output tensor O with dimensions: K,W,H
 */
 
+
+void checkCUDAError(std::string msg) {
+    cudaError_t err = cudaGetLastError();
+    if( cudaSuccess != err) {
+        std::cerr << "Cuda error: " << msg << " - " << cudaGetErrorString(err) << std::endl;
+        exit(1);
+    }
+}
+
 double seconds2milliseconds(double seconds) {
     return seconds*1000;
 }
@@ -246,6 +255,7 @@ int main(int argc, char ** argv) {
 
         int sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
         ConvTiled<<<dimGrid, dimBlock, sharedMemory>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+        checkCUDAError("Tiled convolutions");
     } else {
         throw std::string("unrecognized mode: " + mode);
     }
