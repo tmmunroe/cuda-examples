@@ -226,29 +226,24 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
 
     double value;
     int sharedFilterCount = elementsCount(filters);
-    int threadId = threadIdx.y * blockDim.x + threadIdx.x;
     int thread_x = threadIdx.x;
     int thread_y = threadIdx.y;
-    int block_x = blockIdx.x;
-    int block_y = blockIdx.y;
-    int start_x = block_x * blockDim.x;
-    int start_y = block_y * blockDim.y;
-    int out_x = start_x + thread_x;
-    int out_y = start_y + thread_y;
+    int out_x = blockIdx.x * blockDim.x + thread_x;
+    int out_y = blockIdx.y * blockDim.y + thread_y;
     int input_block_size = BLOCK_SIZE + (2*padding);
 
 
     // transfer all filters to shared memory
     Tensor sharedFilter = tensorView(filters);
     sharedFilter.elements = array;
-    for (int i=threadId; i<sharedFilterCount; i+=sharedFilterCount) {
+    for (int i=threadIdx.y * blockDim.x + threadIdx.x; i<sharedFilterCount; i+=sharedFilterCount) {
         sharedFilter.elements[i] = filters.elements[i];
     }
 
     // transfer BLOCK_SIZE * BLOCK_SIZE * input_depth size section of input into memory
     Tensor inputSubBlock = tensorSubBlock(paddedInput, 
-        start_x, input_block_size,
-        start_y, input_block_size,
+        blockIdx.x * blockDim.x, input_block_size,
+        blockIdx.y * blockDim.y, input_block_size,
         0, paddedInput.dims[2]);
 
     // create tensor to wrap shared input and copy input to shared input, resetting strides and pointing to shared memory
