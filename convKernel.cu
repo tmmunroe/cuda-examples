@@ -245,7 +245,6 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
         sharedFilter.elements[i] = filters.elements[i];
     }
 
-
     // transfer BLOCK_SIZE * BLOCK_SIZE * input_depth size section of input into memory
     Tensor inputSubBlock = tensorSubBlock(paddedInput, 
         start_x, input_block_size,
@@ -271,24 +270,36 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
     // sync threads
     __syncthreads();
 
+    if (out_x == 0 && out_y == 0) {
+        printf("Section of shared filter: \n");
+        printTensor(sharedFilter, 3, 3, 3);
 
-    // run convolutions
-    int filterCount = output.dims[2];
-    for (int out_z = 0; out_z < filterCount; ++out_z) {
-        Tensor filter = tensorLayer(sharedFilter, 4, out_z);
-	
-        if (false && out_x == 0 && out_y == 0 && out_z == 1) {
-            printf("Filter %d\n", out_z);
-            Tensor filter = tensorLayer(filters, 4, out_z);
-            printTensor(filter, 3, 3, 3);
-        }
-
-        if (out_x < output.dims[0] && out_y < output.dims[1]) {
-            // remember, sharedInput pads borders, so we actually want x+padding and y+padding
-            double pixelValue = convolveWithFilter(sharedInput, filter, thread_x+padding, thread_y+padding);
-            setCellValue(output, pixelValue, out_x, out_y, out_z);
-        }
+        printf("Section of shared input: \n");
+        printTensor(sharedInput, 3, 3, 3);
     }
+
+
+
+    // // run convolutions
+    // int filterCount = output.dims[2];
+    // for (int out_z = 0; out_z < filterCount; ++out_z) {
+    //     Tensor filter = tensorLayer(sharedFilter, 4, out_z);
+	
+    //     if (out_x == 0 && out_y == 0 && out_z == 1) {
+    //         printf("Filter %d\n", out_z);
+    //         Tensor filter = tensorLayer(filters, 4, out_z);
+    //         printTensor(filter, 3, 3, 3);
+    //     }
+
+    //     if (out_x < output.dims[0] && out_y < output.dims[1]) {
+    //         // remember, sharedInput pads borders, so we actually want x+padding and y+padding
+    //         double pixelValue = convolveWithFilter(sharedInput, filter, thread_x+padding, thread_y+padding);
+    //         setCellValue(output, pixelValue, out_x, out_y, out_z);
+    //     }
+    // }
+
+    // // sync threads
+    // __syncthreads();
 }
 
 
