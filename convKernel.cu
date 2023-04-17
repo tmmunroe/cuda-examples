@@ -246,21 +246,21 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
         blockIdx.y * blockDim.y, input_block_size,
         0, paddedInput.dims[2]);
 
-    // create tensor to wrap shared input and copy input to shared input, resetting strides and pointing to shared memory
-    Tensor sharedInput = tensorView(inputSubBlock);
-    setStridesToDims(sharedInput);
-    sharedInput.elements = &array[sharedFilterCount]; // start at end of shared memory for filters
+    // // create tensor to wrap shared input and copy input to shared input, resetting strides and pointing to shared memory
+    // Tensor sharedInput = tensorView(inputSubBlock);
+    // setStridesToDims(sharedInput);
+    // sharedInput.elements = &array[sharedFilterCount]; // start at end of shared memory for filters
 
-    // copy values over
-    for (int z=0; z < paddedInput.dims[2]; ++z) {
-        for (int y=thread_y; y < input_block_size; y+=BLOCK_SIZE) {
-            for (int x=thread_x; x < input_block_size; x+=BLOCK_SIZE) {
-                // copy from input to shared_input, keeping in mind that the sharedInput
-                value = cellValue(inputSubBlock, x, y, z);
-                setCellValue(sharedInput, value, x, y, z);
-            }
-        }
-    }
+    // // copy values over
+    // for (int z=0; z < paddedInput.dims[2]; ++z) {
+    //     for (int y=thread_y; y < input_block_size; y+=BLOCK_SIZE) {
+    //         for (int x=thread_x; x < input_block_size; x+=BLOCK_SIZE) {
+    //             // copy from input to shared_input, keeping in mind that the sharedInput
+    //             value = cellValue(inputSubBlock, x, y, z);
+    //             setCellValue(sharedInput, value, x, y, z);
+    //         }
+    //     }
+    // }
 
     // sync threads
     __syncthreads();
@@ -270,7 +270,7 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
         printTensor(sharedFilter, 3, 3, 3);
 
         printf("Section of shared input: \n");
-        printTensor(sharedInput, 3, 3, 3);
+        printTensor(inputSubBlock, 3, 3, 3);
     }
 
 
