@@ -60,7 +60,7 @@ __device__ Tensor cnnSubTensor(const Tensor source, int x, int y, int z,
                             int blockWidth, int blockHeight);
 
 __host__ void printTensorDescriptor(const TensorDescriptor source);
-__host__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim);
+__host__ __device__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim);
 
 Tensor createHostTensor(const TensorDescriptor tensorDescriptor);
 Tensor createDeviceTensor(const Tensor source, bool copy);
