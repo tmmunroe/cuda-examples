@@ -233,8 +233,8 @@ int main(int argc, char ** argv) {
     Tensor deviceFilters = createDeviceTensor(filters, true);
 
     //define dimensions
-    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(deviceOutput.dims[0]/BLOCK_SIZE, deviceOutput.dims[1]/BLOCK_SIZE);
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE/2);
+    dim3 dimGrid(deviceOutput.dims[0]/BLOCK_SIZE, deviceOutput.dims[1]/(BLOCK_SIZE/2));
     cudaDeviceSynchronize();
 
     // Initialize timer  
@@ -253,7 +253,7 @@ int main(int argc, char ** argv) {
 
         int buffer = 64; // some headroom for allocation
 
-        int sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
+        size_t sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
         ConvTiled<<<dimGrid, dimBlock, sharedMemory>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
         checkCUDAError("Tiled convolutions");
     } else {
