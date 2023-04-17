@@ -174,6 +174,8 @@ int main(int argc, char ** argv) {
     if (verbose) {
         printf("\nInput Descriptor: \n");
         printTensorDescriptor(inputDescriptor);
+        printf("\nPadded Input Descriptor: \n");
+        printTensorDescriptor(paddedInputDescriptor);
         printf("\nOutput Descriptor: \n");
         printTensorDescriptor(outputDescriptor);
         printf("\nFilters Descriptor: \n");
@@ -201,13 +203,13 @@ int main(int argc, char ** argv) {
     fillPaddedInput(paddedInput, input, padding, 0.0);
 
     if (verbose) {
-        printf("Section of filter: ");
+        printf("\n\nSection of filter: \n");
         printTensor(tensorLayer(filters, 4, 2), 3, 3, 3);
 
-        printf("Section of input: ");
+        printf("\n\nSection of input: \n");
         printTensor(input, 3, 3, 3);
 
-        printf("Section of padded input: ");
+        printf("\n\nSection of padded input: \n");
         printTensor(paddedInput, 3, 3, 3);
     }
 
@@ -225,7 +227,22 @@ int main(int argc, char ** argv) {
     initialize_timer();
     start_timer();
 
-    Conv<<<dimGrid, dimBlock>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    if (true) { 
+        // simple convolution
+        Conv<<<dimGrid, dimBlock>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    } else {
+        // tiled convolution
+        int filterElementCount = elementsCount(filters);
+        
+        int inputBlockSize = BLOCK_SIZE+(2*padding);
+        int inputElementCount = inputBlockSize*inputBlockSize*paddedInput.dims[2];
+
+        int buffer = 64; // some headroom for allocation
+
+        int sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
+        ConvTiled<<<dimGrid, dimBlock, sharedMemory>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    }
+    
     cudaDeviceSynchronize();
 
     // Compute and return elapsed time 
