@@ -230,8 +230,8 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
     int thread_y = threadIdx.y;
     int out_x = blockIdx.x * blockDim.x + thread_x;
     int out_y = blockIdx.y * blockDim.y + thread_y;
-    int input_block_size = BLOCK_SIZE + (2*padding);
-
+    int input_block_size_x = BLOCK_SIZE + (2*padding);
+    int input_block_size_y = (BLOCK_SIZE/2) + (2*padding);
 
     // transfer all filters to shared memory
     Tensor sharedFilter = tensorView(filters);
@@ -242,8 +242,8 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
 
     // transfer BLOCK_SIZE * BLOCK_SIZE * input_depth size section of input into memory
     Tensor inputSubBlock = tensorSubBlock(paddedInput, 
-        blockIdx.x * blockDim.x, input_block_size,
-        blockIdx.y * blockDim.y, input_block_size,
+        blockIdx.x * blockDim.x, input_block_size_x,
+        blockIdx.y * blockDim.y, input_block_size_y,
         0, paddedInput.dims[2]);
 
     // create tensor to wrap shared input and copy input to shared input, resetting strides and pointing to shared memory
@@ -253,8 +253,8 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
 
     // copy values over
     for (int z=0; z < paddedInput.dims[2]; ++z) {
-        for (int y=thread_y; y < input_block_size; y+=BLOCK_SIZE) {
-            for (int x=thread_x; x < input_block_size; x+=BLOCK_SIZE) {
+        for (int y=thread_y; y < input_block_size_y; y+=BLOCK_SIZE) {
+            for (int x=thread_x; x < input_block_size_x; x+=BLOCK_SIZE) {
                 // copy from input to shared_input, keeping in mind that the sharedInput
                 value = cellValue(inputSubBlock, x, y, z);
                 setCellValue(sharedInput, value, x, y, z);
