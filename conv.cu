@@ -48,6 +48,29 @@ void fillFilter(Tensor tensor) {
     }
 }
 
+void fillPaddedInput(Tensor paddedInput, Tensor input, int padding, double padValue) {
+    double value;
+    for (int c = 0; c < input.dims[2]; ++c) {
+        for (int y = 0; y < input.dims[1]; ++y) {
+            for (int x = 0; x < input.dims[0]; ++x) {
+                value = cellValue(input, x, y, c);
+                setCellValue(paddedInput, value, x+padding, y+padding, c);
+            }
+        }
+
+        for (int y = 0; y < padding; ++y) {
+            for (int x = 0; x < padding; ++x) {
+                setCellValue(paddedInput, padValue, x, y, c);
+                setCellValue(paddedInput, padValue,
+                    paddedInput.dims[0] - 1 - x,
+                    paddedInput.dims[1] - 1 - y,
+                    c
+                );
+            }
+        }
+    }
+}
+
 void fillOnes(Tensor tensor) {
     for (int c = 0; c < tensor.dims[2]; ++c) {
         for (int y = 0; y < tensor.dims[1]; ++y) {
@@ -134,8 +157,15 @@ int main(int argc, char ** argv) {
     double time;
 
     // tensor specifications
+    int padding = 1;
     TensorDescriptor inputDescriptor{.dim=3, .dims={1024, 1024, 3}};
     TensorDescriptor outputDescriptor{.dim=3, .dims={1024, 1024, 64}};
+    TensorDescriptor paddedInputDescriptor{.dim=3, 
+        .dims={
+            inputDescriptor.dims[0]+(padding*2),
+            inputDescriptor.dims[1]+(padding*2),
+            inputDescriptor.dims[2]
+        }};
 
     const int filterDepth(inputDescriptor.dims[2]);
     const int filterCount(outputDescriptor.dims[2]);
@@ -153,6 +183,7 @@ int main(int argc, char ** argv) {
 
     // create tensors for input, output, and an array of tensors for the filters
     Tensor input = createHostTensor(inputDescriptor);
+    Tensor paddedInput = createHostTensor(paddedInputDescriptor);
     Tensor output = createHostTensor(outputDescriptor);
     Tensor filters = createHostTensor(filtersDescriptor);
 
@@ -167,30 +198,34 @@ int main(int argc, char ** argv) {
         fillFilter(filters);
     }
 
+    fillPaddedInput(paddedInput, input, padding, 0.0);
+
     if (verbose) {
         printf("Section of filter: ");
         printTensor(tensorLayer(filters, 4, 2), 3, 3, 3);
 
-        printTensor(tensorLayer(filters, 4, 2), 3, 3, 3);
         printf("Section of input: ");
         printTensor(input, 3, 3, 3);
+
+        printf("Section of padded input: ");
+        printTensor(paddedInput, 3, 3, 3);
     }
 
     // create tensors on device
-    Tensor device_input = createDeviceTensor(input, true);
-    Tensor device_output = createDeviceTensor(output, false);
+    Tensor devicePaddedInput = createDeviceTensor(paddedInput, true);
+    Tensor deviceOutput = createDeviceTensor(output, false);
     Tensor deviceFilters = createDeviceTensor(filters, true);
 
     //define dimensions
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(device_output.dims[0]/BLOCK_SIZE, device_output.dims[1]/BLOCK_SIZE);
+    dim3 dimGrid(deviceOutput.dims[0]/BLOCK_SIZE, deviceOutput.dims[1]/BLOCK_SIZE);
     cudaDeviceSynchronize();
 
     // Initialize timer  
     initialize_timer();
     start_timer();
 
-    Conv<<<dimGrid, dimBlock>>>(device_input, device_output, deviceFilters);
+    Conv<<<dimGrid, dimBlock>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
     cudaDeviceSynchronize();
 
     // Compute and return elapsed time 
@@ -199,7 +234,7 @@ int main(int argc, char ** argv) {
 
     // copy to host
     size_t size = output.strides[2] * sizeof(double);
-    cudaMemcpy(output.elements, device_output.elements, size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(output.elements, deviceOutput.elements, size, cudaMemcpyDeviceToHost);
 
     // check result
     if (isTestCase) {
@@ -212,10 +247,11 @@ int main(int argc, char ** argv) {
 
     // cleanup
     free(input.elements);
+    free(paddedInput.elements);
     free(output.elements);
     free(filters.elements);
 
-    cudaFree(device_input.elements);
-    cudaFree(device_output.elements);
+    cudaFree(devicePaddedInput.elements);
+    cudaFree(deviceOutput.elements);
     cudaFree(deviceFilters.elements);
 }
