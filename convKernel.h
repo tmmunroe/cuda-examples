@@ -23,11 +23,13 @@ typedef struct {
 } Tensor;
 
 
-__global__ void Conv(const Tensor input, Tensor output, const Tensor filters);
-__global__ void ConvTiled(const Tensor input, Tensor output, const Tensor filters);
+__global__ void Conv(const Tensor input, Tensor output, const Tensor filters, int padding);
+__global__ void ConvTiled(const Tensor input, Tensor output, const Tensor filters, int padding);
 
 __host__ __device__ int dim(Tensor tensor, int dim);
 __host__ __device__ int stride(Tensor tensor, int dim);
+__host__ __device__ void setStridesToDims(Tensor tensor);
+__host__ __device__ int elementsCount(Tensor tensor);
 
 __host__ __device__ int offset(Tensor tensor, int d0, int d1);
 __host__ __device__ int offset(Tensor tensor, int d0, int d1, int d2);
@@ -51,13 +53,12 @@ __host__ __device__ Tensor tensorSubBlock(const Tensor source,
     int idx1, int dim1,
     int idx2, int dim2,
     int idx3, int dim3);
+__host__ __device__ Tensor tensorView(const Tensor source);
 
 __host__ __device__ Tensor tensorLayer(const Tensor source, int dim, int idx);
 
 
 __device__ double convolveWithFilter(const Tensor input, const Tensor filter, int out_x, int out_y);
-__device__ Tensor cnnSubTensor(const Tensor source, int x, int y, int z,
-                            int blockWidth, int blockHeight);
 
 __host__ void printTensorDescriptor(const TensorDescriptor source);
 __host__ __device__ void printTensor(const Tensor source, int x_lim, int y_lim, int z_lim);

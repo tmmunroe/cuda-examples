@@ -18,6 +18,15 @@ F[k, c, i, j] = (c + k) · (i + j)
 The output tensor O with dimensions: K,W,H
 */
 
+
+void checkCUDAError(std::string msg) {
+    cudaError_t err = cudaGetLastError();
+    if( cudaSuccess != err) {
+        std::cerr << "Cuda error: " << msg << " - " << cudaGetErrorString(err) << std::endl;
+        exit(1);
+    }
+}
+
 double seconds2milliseconds(double seconds) {
     return seconds*1000;
 }
@@ -43,6 +52,29 @@ void fillFilter(Tensor tensor) {
                     value = (c+k)*double(x+y);
                     setCellValue(tensor, value, x, y, c);
                 }
+            }
+        }
+    }
+}
+
+void fillPaddedInput(Tensor paddedInput, Tensor input, int padding, double padValue) {
+    double value;
+    for (int c = 0; c < input.dims[2]; ++c) {
+        for (int y = 0; y < input.dims[1]; ++y) {
+            for (int x = 0; x < input.dims[0]; ++x) {
+                value = cellValue(input, x, y, c);
+                setCellValue(paddedInput, value, x+padding, y+padding, c);
+            }
+        }
+
+        for (int y = 0; y < padding; ++y) {
+            for (int x = 0; x < padding; ++x) {
+                setCellValue(paddedInput, padValue, x, y, c);
+                setCellValue(paddedInput, padValue,
+                    paddedInput.dims[0] - 1 - x,
+                    paddedInput.dims[1] - 1 - y,
+                    c
+                );
             }
         }
     }
@@ -124,18 +156,30 @@ void checkTestResults(Tensor output) {
 int main(int argc, char ** argv) {
     bool isTestCase = false;
     bool verbose = false;
-    if (argc > 2) {
-        isTestCase = std::string("test") == argv[1];
-        verbose = std::string("verbose") == argv[2];
+    std::string mode("simple");
+    if (argc > 3) {
+        mode = std::string(argv[1]);
+        isTestCase = std::string("test") == argv[2];
+        verbose = std::string("verbose") == argv[3];
+    } else if (argc > 2) {
+        mode = std::string(argv[1]);
+        isTestCase = std::string("test") == argv[2];
     } else if (argc > 1) {
-        isTestCase = std::string("test") == argv[1];
+        mode = std::string(argv[1]);
     }
 
     double time;
 
     // tensor specifications
+    int padding = 1;
     TensorDescriptor inputDescriptor{.dim=3, .dims={1024, 1024, 3}};
     TensorDescriptor outputDescriptor{.dim=3, .dims={1024, 1024, 64}};
+    TensorDescriptor paddedInputDescriptor{.dim=3, 
+        .dims={
+            inputDescriptor.dims[0]+(padding*2),
+            inputDescriptor.dims[1]+(padding*2),
+            inputDescriptor.dims[2]
+        }};
 
     const int filterDepth(inputDescriptor.dims[2]);
     const int filterCount(outputDescriptor.dims[2]);
@@ -144,6 +188,8 @@ int main(int argc, char ** argv) {
     if (verbose) {
         printf("\nInput Descriptor: \n");
         printTensorDescriptor(inputDescriptor);
+        printf("\nPadded Input Descriptor: \n");
+        printTensorDescriptor(paddedInputDescriptor);
         printf("\nOutput Descriptor: \n");
         printTensorDescriptor(outputDescriptor);
         printf("\nFilters Descriptor: \n");
@@ -153,6 +199,7 @@ int main(int argc, char ** argv) {
 
     // create tensors for input, output, and an array of tensors for the filters
     Tensor input = createHostTensor(inputDescriptor);
+    Tensor paddedInput = createHostTensor(paddedInputDescriptor);
     Tensor output = createHostTensor(outputDescriptor);
     Tensor filters = createHostTensor(filtersDescriptor);
 
@@ -167,55 +214,98 @@ int main(int argc, char ** argv) {
         fillFilter(filters);
     }
 
-    if (verbose) {
-        printf("Section of filter: ");
-        printTensor(tensorLayer(filters, 4, 2), 3, 3, 3);
+    fillPaddedInput(paddedInput, input, padding, 0.0);
 
-        printTensor(tensorLayer(filters, 4, 2), 3, 3, 3);
-        printf("Section of input: ");
+    if (verbose) {
+        printf("\n\nSection of filter 38: \n");
+        printTensor(tensorLayer(filters, 4, 38), 3, 3, 3);
+
+        printf("\n\nSection of input: \n");
         printTensor(input, 3, 3, 3);
+
+        printf("\n\nSection of padded input: \n");
+        printTensor(paddedInput, 3, 3, 3);
     }
 
     // create tensors on device
-    Tensor device_input = createDeviceTensor(input, true);
-    Tensor device_output = createDeviceTensor(output, false);
+    Tensor devicePaddedInput = createDeviceTensor(paddedInput, true);
+    Tensor deviceOutput = createDeviceTensor(output, false);
     Tensor deviceFilters = createDeviceTensor(filters, true);
 
-    //define dimensions
-    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(device_output.dims[0]/BLOCK_SIZE, device_output.dims[1]/BLOCK_SIZE);
     cudaDeviceSynchronize();
 
-    // Initialize timer  
-    initialize_timer();
-    start_timer();
 
-    Conv<<<dimGrid, dimBlock>>>(device_input, device_output, deviceFilters);
-    cudaDeviceSynchronize();
+    if (mode == "simple") { 
+        //define dimensions
+        dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+        dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
 
-    // Compute and return elapsed time 
-    stop_timer();
-    time = elapsed_time();
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
+
+        // simple convolution
+        Conv<<<dimGrid, dimBlock>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    	cudaDeviceSynchronize();
+
+        // Compute and return elapsed time 
+        stop_timer();
+        time = elapsed_time();
+        
+        checkCUDAError("Simple convolutions");
+    } else if (mode == "tiled") {
+        //define dimensions
+        dim3 dimBlock(256, 1);
+        dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
+        
+        // tiled convolution
+        int filterElementCount = elementsCount(filters);
+        
+        int inputBlockSize = (dimBlock.x)+(2*padding);
+        int inputElementCount = inputBlockSize*filters.dims[1]*paddedInput.dims[2];
+
+        int buffer = 0; // some headroom for allocation
+
+        size_t sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
+	    printf("Size of Shared Memory: %zu\n\n", sharedMemory);
+        
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
+
+        ConvTiled<<<dimGrid, dimBlock, sharedMemory>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    	cudaDeviceSynchronize();
+
+        // Compute and return elapsed time 
+        stop_timer();
+        time = elapsed_time();
+
+        checkCUDAError("Tiled convolutions");
+    } else {
+        throw std::string("unrecognized mode: " + mode);
+    }
+
 
     // copy to host
     size_t size = output.strides[2] * sizeof(double);
-    cudaMemcpy(output.elements, device_output.elements, size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(output.elements, deviceOutput.elements, size, cudaMemcpyDeviceToHost);
 
     // check result
     if (isTestCase) {
         printf("Checking test results...\n");
         checkTestResults(output);
-    } else {
-        double checksum = calculateChecksum(output);
-        printf("%0.2lf,%0.3lf\n", checksum, seconds2milliseconds(time));
-    }
+    } 
+
+    double checksum = calculateChecksum(output);
+    printf("%0.2lf,%0.3lf\n", checksum, seconds2milliseconds(time));
 
     // cleanup
     free(input.elements);
+    free(paddedInput.elements);
     free(output.elements);
     free(filters.elements);
 
-    cudaFree(device_input.elements);
-    cudaFree(device_output.elements);
+    cudaFree(devicePaddedInput.elements);
+    cudaFree(deviceOutput.elements);
     cudaFree(deviceFilters.elements);
 }
