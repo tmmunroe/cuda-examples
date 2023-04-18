@@ -161,7 +161,6 @@ Tensor createHostTensor(const TensorDescriptor tensorDescriptor){
     tensor.dims[i] = tensorDescriptor.dims[i];
     stride = stride * tensorDescriptor.dims[i];
     tensor.strides[i] = stride;
-    printf("Stride %d: %d from %d\n", i, tensor.strides[i], tensorDescriptor.dims[i]);
   }
 
   size_t size = tensor.strides[tensor.dim-1] * sizeof(double);
