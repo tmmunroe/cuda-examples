@@ -255,13 +255,14 @@ int main(int argc, char ** argv) {
         checkCUDAError("Simple convolutions");
     } else if (mode == "tiled") {
         //define dimensions
-        dim3 dimBlock(256, 1);
+	int x_dim = 256;
+        dim3 dimBlock(x_dim, 1);
         dim3 dimGrid((deviceOutput.dims[0]/dimBlock.x)+1, (deviceOutput.dims[1]/dimBlock.y)+1);
         
         // tiled convolution
         int filterElementCount = elementsCount(filters);
         
-        int inputBlockSize = (256)+(2*padding);
+        int inputBlockSize = (x_dim)+(2*padding);
         int inputElementCount = inputBlockSize*filters.dims[1]*paddedInput.dims[2];
 
         int buffer = 0; // some headroom for allocation
