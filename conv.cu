@@ -158,14 +158,14 @@ int main(int argc, char ** argv) {
     bool verbose = false;
     std::string mode("simple");
     if (argc > 3) {
-        isTestCase = std::string("test") == argv[1];
-        verbose = std::string("verbose") == argv[2];
-        mode = std::string(argv[3]);
+        mode = std::string(argv[1]);
+        isTestCase = std::string("test") == argv[2];
+        verbose = std::string("verbose") == argv[3];
     } else if (argc > 2) {
-        isTestCase = std::string("test") == argv[1];
-        verbose = std::string("verbose") == argv[2];
+        mode = std::string(argv[1]);
+        isTestCase = std::string("test") == argv[2];
     } else if (argc > 1) {
-        isTestCase = std::string("test") == argv[1];
+        mode = std::string(argv[1]);
     }
 
     double time;
@@ -274,7 +274,7 @@ int main(int argc, char ** argv) {
         // Compute and return elapsed time 
         stop_timer();
         time = elapsed_time();
-        
+
         checkCUDAError("Tiled convolutions");
     } else {
         throw std::string("unrecognized mode: " + mode);
