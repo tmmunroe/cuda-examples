@@ -277,11 +277,10 @@ int main(int argc, char ** argv) {
     if (isTestCase) {
         printf("Checking test results...\n");
         checkTestResults(output);
-    } else {
-        double checksum = calculateChecksum(output);
-        printf("%0.2lf,%0.3lf\n", checksum, seconds2milliseconds(time));
-    }
+    } 
 
+    double checksum = calculateChecksum(output);
+    printf("%0.2lf,%0.3lf\n", checksum, seconds2milliseconds(time));
     // cleanup
     free(input.elements);
     free(paddedInput.elements);
