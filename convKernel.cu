@@ -196,8 +196,7 @@ __device__ double convolveWithFilter(const Tensor input, const Tensor filter, in
                 // Verify we are inside the boundaries width and height
                 if(in_x > -1 && in_x < input_width
                     && in_y > -1 && in_y < input_height) {
-                    //NOTE: we flip dy and dx when indexing into the filter in order to get the transpose of it
-                    pixelValue += cellValue(input, in_x, in_y, z) * cellValue(filter, dy, dx, z);
+                    pixelValue += cellValue(input, in_x, in_y, z) * cellValue(filter, width-1-dx, height-1-dy, z);
                 }
             }
         }

@@ -1,0 +1,41 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "make all",
+			"command": "make all",
+			"type": "shell",
+			"problemMatcher": [
+				"$nvcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+		},
+		{
+			"label": "make clean all",
+			"command": "make clean all",
+			"type": "shell",
+			"problemMatcher": [
+				"$nvcc"
+			],
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			},
+		},
+		{
+			"label": "make clean",
+			"command": "make clean",
+			"type": "shell",
+			"problemMatcher": [
+				"$nvcc"
+			],
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			},
+		}
+	]
+}
