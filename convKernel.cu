@@ -18,6 +18,9 @@ __host__ __device__ int elementsCount(Tensor tensor) {
     return count;
 }
 
+__host__ __device__ size_t sizeInBytes(Tensor tensor) {
+    return elementsCount(tensor) * sizeof(double);
+}
 
 __host__ __device__ int offset(Tensor tensor, int d0, int d1) {
     return d0 + tensor.strides[0]*d1;
