@@ -237,14 +237,20 @@ int main(int argc, char ** argv) {
     dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
     cudaDeviceSynchronize();
 
-    // Initialize timer  
-    initialize_timer();
-    start_timer();
 
     if (mode == "simple") { 
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
+
         // simple convolution
         Conv<<<dimGrid, dimBlock>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
     	cudaDeviceSynchronize();
+
+        // Compute and return elapsed time 
+        stop_timer();
+        time = elapsed_time();
+        
         checkCUDAError("Simple convolutions");
     } else if (mode == "tiled") {
         // tiled convolution
@@ -256,18 +262,24 @@ int main(int argc, char ** argv) {
         int buffer = 64; // some headroom for allocation
 
         size_t sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
-	printf("Size of Shared Memory: %zu\n\n", sharedMemory);
+	    printf("Size of Shared Memory: %zu\n\n", sharedMemory);
+        
+        // Initialize timer  
+        initialize_timer();
+        start_timer();
+
         ConvTiled<<<dimGrid, dimBlock, sharedMemory>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
     	cudaDeviceSynchronize();
+
+        // Compute and return elapsed time 
+        stop_timer();
+        time = elapsed_time();
+        
         checkCUDAError("Tiled convolutions");
     } else {
         throw std::string("unrecognized mode: " + mode);
     }
 
-
-    // Compute and return elapsed time 
-    stop_timer();
-    time = elapsed_time();
 
     // copy to host
     size_t size = output.strides[2] * sizeof(double);
@@ -281,6 +293,7 @@ int main(int argc, char ** argv) {
 
     double checksum = calculateChecksum(output);
     printf("%0.2lf,%0.3lf\n", checksum, seconds2milliseconds(time));
+
     // cleanup
     free(input.elements);
     free(paddedInput.elements);
