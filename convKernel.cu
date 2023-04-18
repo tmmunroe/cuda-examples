@@ -224,13 +224,14 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
     int thread_y = threadIdx.y;
     int out_x = blockIdx.x * blockDim.x + thread_x;
     int out_y = blockIdx.y * blockDim.y + thread_y;
+    int threadCount = blockDim.x * blockDim.y;
     int input_block_size_x = BLOCK_SIZE + (2*padding);
-    int input_block_size_y = (BLOCK_SIZE/2) + (2*padding);
+    int input_block_size_y = BLOCK_SIZE + (2*padding);
 
     // transfer all filters to shared memory
     Tensor sharedFilter = tensorView(filters);
     sharedFilter.elements = array;
-    for (int i=threadIdx.y * blockDim.x + threadIdx.x; i<sharedFilterCount; i+=sharedFilterCount) {
+    for (int i=threadIdx.y * blockDim.x + threadIdx.x; i<sharedFilterCount; i+=threadCount) {
         sharedFilter.elements[i] = filters.elements[i];
     }
 
@@ -263,20 +264,22 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
     // sync threads
     __syncthreads();
 
-    if (out_x == 0 && out_y == 0) {
-        printf("Section of shared filter: \n");
-        printTensor(sharedFilter, 3, 3, 3);
 
+
+    if (out_x == 0 && out_y == 0) {
         printf("Section of shared input: \n");
         printTensor(inputSubBlock, 3, 3, 3);
     }
-
-
 
     // run convolutions
     int filterCount = output.dims[2];
     for (int out_z = 0; out_z < filterCount; ++out_z) {
         Tensor filter = tensorLayer(sharedFilter, 4, out_z);
+    if (out_x == 0 && out_y == 0 && out_z > 30) {
+        printf("\n\n\nSection of shared filter %d \n", out_z);
+        printTensor(filter, 2,2,2);
+    }
+
 	
         if (out_x < output.dims[0] && out_y < output.dims[1]) {
             // remember, sharedInput pads borders, so we actually want x+padding and y+padding

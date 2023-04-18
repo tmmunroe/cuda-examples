@@ -217,8 +217,8 @@ int main(int argc, char ** argv) {
     fillPaddedInput(paddedInput, input, padding, 0.0);
 
     if (verbose) {
-        printf("\n\nSection of filter: \n");
-        printTensor(tensorLayer(filters, 4, 2), 3, 3, 3);
+        printf("\n\nSection of filter 38: \n");
+        printTensor(tensorLayer(filters, 4, 38), 3, 3, 3);
 
         printf("\n\nSection of input: \n");
         printTensor(input, 3, 3, 3);
@@ -233,8 +233,8 @@ int main(int argc, char ** argv) {
     Tensor deviceFilters = createDeviceTensor(filters, true);
 
     //define dimensions
-    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE/2);
-    dim3 dimGrid(deviceOutput.dims[0]/BLOCK_SIZE, deviceOutput.dims[1]/(BLOCK_SIZE/2));
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
     cudaDeviceSynchronize();
 
     // Initialize timer  
@@ -244,6 +244,8 @@ int main(int argc, char ** argv) {
     if (mode == "simple") { 
         // simple convolution
         Conv<<<dimGrid, dimBlock>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    	cudaDeviceSynchronize();
+        checkCUDAError("Simple convolutions");
     } else if (mode == "tiled") {
         // tiled convolution
         int filterElementCount = elementsCount(filters);
@@ -254,13 +256,14 @@ int main(int argc, char ** argv) {
         int buffer = 64; // some headroom for allocation
 
         size_t sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
+	printf("Size of Shared Memory: %zu\n\n", sharedMemory);
         ConvTiled<<<dimGrid, dimBlock, sharedMemory>>>(devicePaddedInput, deviceOutput, deviceFilters, padding);
+    	cudaDeviceSynchronize();
         checkCUDAError("Tiled convolutions");
     } else {
         throw std::string("unrecognized mode: " + mode);
     }
 
-    cudaDeviceSynchronize();
 
     // Compute and return elapsed time 
     stop_timer();
