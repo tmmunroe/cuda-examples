@@ -18,12 +18,6 @@ __host__ __device__ int elementsCount(Tensor tensor) {
     return count;
 }
 
-__host__ __device__ void setStridesToDims(Tensor tensor) {
-  tensor.strides[0] = tensor.dims[0];
-  for (int i=1; i<tensor.dim; ++i) {
-    tensor.strides[i] = tensor.strides[i-1] * tensor.dims[i];
-  }
-}
 
 __host__ __device__ int offset(Tensor tensor, int d0, int d1) {
     return d0 + tensor.strides[0]*d1;
@@ -248,7 +242,10 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
 
     // create tensor to wrap shared input and copy input to shared input, resetting strides and pointing to shared memory
     Tensor sharedInput = tensorView(inputSubBlock);
-    setStridesToDims(sharedInput);
+  sharedInput.strides[0] = sharedInput.dims[0];
+  for (int i=1; i<sharedInput.dim; ++i) {
+    sharedInput.strides[i] = sharedInput.strides[i-1] * sharedInput.dims[i];
+  }
     sharedInput.elements = &array[sharedFilterCount]; // start at end of shared memory for filters
 
     // copy values over
@@ -257,7 +254,8 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
             for (int x=thread_x; x < input_block_size_x; x+=BLOCK_SIZE) {
                 // copy from input to shared_input, keeping in mind that the sharedInput
                 value = cellValue(inputSubBlock, x, y, z);
-                setCellValue(sharedInput, value, x, y, z);
+                //setCellValue(sharedInput, value, x, y, z);
+    		sharedInput.elements[offset(sharedInput, x, y, z)] = value;
             }
         }
     }
@@ -280,16 +278,11 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
     for (int out_z = 0; out_z < filterCount; ++out_z) {
         Tensor filter = tensorLayer(sharedFilter, 4, out_z);
 	
-        if (out_x == 0 && out_y == 0 && out_z == 1) {
-            printf("Filter %d\n", out_z);
-            Tensor filter = tensorLayer(filters, 4, out_z);
-            printTensor(filter, 3, 3, 3);
-        }
-
         if (out_x < output.dims[0] && out_y < output.dims[1]) {
             // remember, sharedInput pads borders, so we actually want x+padding and y+padding
             double pixelValue = convolveWithFilter(sharedInput, filter, thread_x+padding, thread_y+padding);
-            setCellValue(output, pixelValue, out_x, out_y, out_z);
+            //setCellValue(output, pixelValue, out_x, out_y, out_z);
+    		output.elements[offset(output, out_x, out_y, out_z)] = pixelValue;
         }
     }
 
