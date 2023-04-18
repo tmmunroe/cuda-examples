@@ -13,7 +13,7 @@ SDK_INSTALL_PATH := /usr/local/cuda-11.0
 # SDK_INSTALL_PATH := /usr/local/cuda
 NVCC=$(SDK_INSTALL_PATH)/bin/nvcc
 LIB       :=  -L$(SDK_INSTALL_PATH)/lib64 -L$(SDK_INSTALL_PATH)/samples/common/lib/linux/x86_64 -lcudnn -lcublas -lcublasLt -lz
-INCLUDES  :=  -I$(SDK_INSTALL_PATH)/include -I$(SDK_INSTALL_PATH)/samples/common/inc
+#INCLUDES  :=  -I$(SDK_INSTALL_PATH)/include -I$(SDK_INSTALL_PATH)/samples/common/inc
 #OPTIONS   :=  -O3 -g -G
 OPTIONS   :=  -O3
 #--maxrregcount=100 --ptxas-options -v 
@@ -101,5 +101,5 @@ convKernel.o : convKernel.cu convKernel.h
 	${NVCC} $< -c -o $@ $(OPTIONS)
 
 conv : conv.cu convKernel.h convKernel.o timer.o
-	${NVCC} $< convKernel.o -o $@ $(LIB) timer.o $(OPTIONS) $(INCLUDES)
+	${NVCC} $< convKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
 
