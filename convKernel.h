@@ -30,6 +30,7 @@ __host__ __device__ int dim(Tensor tensor, int dim);
 __host__ __device__ int stride(Tensor tensor, int dim);
 __host__ __device__ void setStridesToDims(Tensor tensor);
 __host__ __device__ int elementsCount(Tensor tensor);
+__host__ __device__ size_t sizeInBytes(Tensor tensor);
 
 __host__ __device__ int offset(Tensor tensor, int d0, int d1);
 __host__ __device__ int offset(Tensor tensor, int d0, int d1, int d2);

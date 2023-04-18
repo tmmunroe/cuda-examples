@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Conv simple test",
+            "type": "cuda-gdb",
+            "request": "launch",
+            "program": "${workspaceFolder}/conv",
+            "args": "simple test",
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "debuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+        },
+        {
+            "name": "(gdb) Conv tiled test",
+            "type": "cuda-gdb",
+            "request": "launch",
+            "program": "${workspaceFolder}/conv",
+            "args": "tiled test",
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "debuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+        },
+        {
+            "name": "(gdb) Conv cudnn test",
+            "type": "cuda-gdb",
+            "request": "launch",
+            "program": "${workspaceFolder}/conv",
+            "args": "cudnn test",
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "debuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+        },
+    ]
+}
