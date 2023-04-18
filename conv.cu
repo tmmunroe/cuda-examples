@@ -232,13 +232,14 @@ int main(int argc, char ** argv) {
     Tensor deviceOutput = createDeviceTensor(output, false);
     Tensor deviceFilters = createDeviceTensor(filters, true);
 
-    //define dimensions
-    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
     cudaDeviceSynchronize();
 
 
     if (mode == "simple") { 
+        //define dimensions
+        dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+        dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
+
         // Initialize timer  
         initialize_timer();
         start_timer();
@@ -253,6 +254,10 @@ int main(int argc, char ** argv) {
         
         checkCUDAError("Simple convolutions");
     } else if (mode == "tiled") {
+        //define dimensions
+        dim3 dimBlock(BLOCK_SIZE-(2*padding), BLOCK_SIZE-(2*padding));
+        dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
+        
         // tiled convolution
         int filterElementCount = elementsCount(filters);
         
