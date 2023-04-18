@@ -212,7 +212,7 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
     int thread_x = threadIdx.x;
     int out_x = blockIdx.x * blockDim.x + thread_x;
     int out_y = blockIdx.y * blockDim.y;
-    if (out_x < output.dims[0] && out_y < output.dims[1]) {
+    // if (out_x < output.dims[0] && out_y < output.dims[1]) {
 
     int threadCount = blockDim.x * blockDim.y;
     int block_dim_x = blockDim.x;
@@ -270,7 +270,7 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
 	    output.elements[offset(output, out_x, out_y, out_z)] = pixelValue;
         }
     }
-    }
+    // }
 }
 
 
