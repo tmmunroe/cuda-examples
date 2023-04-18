@@ -211,17 +211,20 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
     double value;
     int sharedFilterCount = elementsCount(filters);
     int thread_x = threadIdx.x;
-    int thread_y = threadIdx.y;
     int out_x = blockIdx.x * blockDim.x + thread_x;
-    int out_y = blockIdx.y * blockDim.y + thread_y;
+    int out_y = blockIdx.y * blockDim.y;
+    if (out_x < output.dims[0] && out_y < output.dims[1]) {
+
     int threadCount = blockDim.x * blockDim.y;
-    int input_block_size_x = BLOCK_SIZE + (2*padding);
-    int input_block_size_y = BLOCK_SIZE + (2*padding);
+    int block_dim_x = blockDim.x;
+    int input_block_size_x = block_dim_x + (2*padding);
+    int input_block_size_y = filters.dims[1];
+    //printf("input_block_size_x: %d, input_block_size_y: %d\n", input_block_size_x, input_block_size_y);
 
     // transfer all filters to shared memory
     Tensor sharedFilter = tensorView(filters);
     sharedFilter.elements = array;
-    for (int i=threadIdx.y * blockDim.x + threadIdx.x; i<sharedFilterCount; i+=threadCount) {
+    for (int i=thread_x; i<sharedFilterCount; i+=threadCount) {
         sharedFilter.elements[i] = filters.elements[i];
     }
 
@@ -238,14 +241,18 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
         sharedInput.strides[i] = sharedInput.strides[i-1] * sharedInput.dims[i];
     }
     sharedInput.elements = &array[sharedFilterCount]; // start at end of shared memory for filters
+//    printf("sharedInput: dims: %d, %d, %d, strides: %d, %d, %d\n", sharedInput.dims[0], sharedInput.dims[1],
+		    // sharedInput.dims[2], sharedInput.strides[0], sharedInput.strides[1], sharedInput.strides[2]);
 
     // copy values over
     for (int z=0; z < paddedInput.dims[2]; ++z) {
-        for (int y=thread_y; y < input_block_size_y; y+=BLOCK_SIZE) {
-            for (int x=thread_x; x < input_block_size_x; x+=BLOCK_SIZE) {
+        for (int dy=0; dy < input_block_size_y; ++dy) {
+            for (int x=thread_x; x < input_block_size_x; x+=block_dim_x) {
                 // copy from input to shared_input, keeping in mind that the sharedInput
-                value = cellValue(inputSubBlock, x, y, z);
-                setCellValue(sharedInput, value, x, y, z);
+                value = cellValue(inputSubBlock, x, dy, z);
+                //setCellValue(sharedInput, value, x, out_y + dy, z);
+		//printf("Setting  (%d, %d, %d), offset=%d\n", x, out_y+dy, z, offset(sharedInput, x, dy, z));
+    		sharedInput.elements[offset(sharedInput, x, dy, z)] = value;
             }
         }
     }
@@ -259,9 +266,11 @@ __global__ void ConvTiled(const Tensor paddedInput, Tensor output, const Tensor 
         Tensor filter = tensorLayer(sharedFilter, 4, out_z);
         if (out_x < output.dims[0] && out_y < output.dims[1]) {
             // remember, sharedInput pads borders, so we actually want x+padding and y+padding
-            double pixelValue = convolveWithFilter(sharedInput, filter, thread_x+padding, thread_y+padding);
-            setCellValue(output, pixelValue, out_x, out_y, out_z);
+            double pixelValue = convolveWithFilter(sharedInput, filter, thread_x+padding, padding);
+            //setCellValue(output, pixelValue, out_x, out_y, out_z);
+	    output.elements[offset(output, out_x, out_y, out_z)] = pixelValue;
         }
+    }
     }
 }
 

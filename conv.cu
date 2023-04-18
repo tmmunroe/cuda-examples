@@ -255,16 +255,16 @@ int main(int argc, char ** argv) {
         checkCUDAError("Simple convolutions");
     } else if (mode == "tiled") {
         //define dimensions
-        dim3 dimBlock(BLOCK_SIZE-(2*padding), BLOCK_SIZE-(2*padding));
-        dim3 dimGrid(deviceOutput.dims[0]/dimBlock.x, deviceOutput.dims[1]/dimBlock.y);
+        dim3 dimBlock(256, 1);
+        dim3 dimGrid((deviceOutput.dims[0]/dimBlock.x)+1, (deviceOutput.dims[1]/dimBlock.y)+1);
         
         // tiled convolution
         int filterElementCount = elementsCount(filters);
         
-        int inputBlockSize = BLOCK_SIZE+(2*padding);
-        int inputElementCount = inputBlockSize*inputBlockSize*paddedInput.dims[2];
+        int inputBlockSize = (256)+(2*padding);
+        int inputElementCount = inputBlockSize*filters.dims[1]*paddedInput.dims[2];
 
-        int buffer = 64; // some headroom for allocation
+        int buffer = 0; // some headroom for allocation
 
         size_t sharedMemory = (filterElementCount + inputElementCount + buffer) * sizeof(double);
 	    printf("Size of Shared Memory: %zu\n\n", sharedMemory);
