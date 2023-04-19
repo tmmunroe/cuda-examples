@@ -27,11 +27,27 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
   float *Asub, *Bsub, *Csub;
 
   // Putting these into registers speeds access.
+  // store global thread id since the ordering induced by this is
+  //  how CUDA partitions threads into warps
   int threadId = threadIdx.y * blockDim.x + threadIdx.x;
+
+  // variables named based on value to make it a little easier to know what their
+  //  range is.. these are used for indexing
+  // In this kernel, the computation is partitioned into 4 blocks of (32 x 8) elements -
+  // that is, 8 rows of 32 elements each. In total, that covers a (32 x 32) element block.
+  // Each thread is responsible for 1 element in each of the subblocks.
+  // By using the thread's global id modulo 32 as a column index, and the thread's global id
+  // divided by 32 (as an integer), we can ensure that threads within a warp will access contiguous memory locations.
   int zeroToEight = threadId / 32;
   int zeroToThirtyTwo = threadId % 32;
+
   int block_row = blockIdx.y;
   int block_col = blockIdx.x;
+
+  // Use col_start and row_start to get the beginning of the regioun of the array
+  // that will be covered by this block.. Note that we use the FOOTPRINT_SIZE here, which is 32,
+  // instead of the BLOCK_SIZE, which is 16, because we want to process (32x32) patches of the array
+  //  which will enable us to coalesce reads and writes of each row
   int col_start = block_col * FOOTPRINT_SIZE;
   int row_start = block_row * FOOTPRINT_SIZE;
 
@@ -50,13 +66,18 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
   // EACH THREAD creates its own matrix descriptor Csub
   Csub = &C.elements[C.stride * row_start + col_start];
 
-  // Each thread computes one element of Csub in its copy of CValue
+  // Each thread computes 4 elements of Csub in its copy of CValue
+  // Since this thread block has (32x8) threads to compute (32x32)
+  // entries in the matrix multiplication, each thread will calculate 
+  // 4 values - one value for each of four rows. This enables reads and writes
+  // to be fully coalesced since each warp will access a row of memory.
   int row0 = zeroToEight;
   int row1 = zeroToEight + 8;
   int row2 = zeroToEight + 16;
   int row3 = zeroToEight + 24;
 
-
+  // registers for each value being computed, corresponding to the rows above, and the 
+  //  unique column index denoted by zeroToThirtyTwo.
   float c0 = 0;
   float c1 = 0;
   float c2 = 0;
@@ -71,6 +92,8 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
     Bsub = &B.elements[B.stride * FOOTPRINT_SIZE * block_number + col_start];
     
     // Each thread copies just four elements of shared_A and four elements of shared_B
+    // note that these reads are fully coalesced because threads in a given warp will
+    // access contiguous blocks of memory.
     shared_A[row0][zeroToThirtyTwo] = Asub[row0 * A.stride + zeroToThirtyTwo];
     shared_A[row1][zeroToThirtyTwo] = Asub[row1 * A.stride + zeroToThirtyTwo];
     shared_A[row2][zeroToThirtyTwo] = Asub[row2 * A.stride + zeroToThirtyTwo];
@@ -103,6 +126,8 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
 
   // Write Csub to GLOBAL memory.
   // Each thread writes its own cell value.
+  // Note again that these writes are fully coalesced because threads in a given warp
+  // will access contigous indexes in memory.
   Csub[row0 * C.stride + zeroToThirtyTwo] = c0;
   Csub[row1 * C.stride + zeroToThirtyTwo] = c1;
   Csub[row2 * C.stride + zeroToThirtyTwo] = c2;

@@ -44,6 +44,10 @@ vecaddKernel00.o : vecaddKernel00.cu
 vecadd00 : vecadd.cu vecaddKernel.h vecaddKernel00.o timer.o
 	${NVCC} $< vecaddKernel00.o -o $@ $(LIB) timer.o $(OPTIONS)
 
+#
+# used the global thread id (computed from block dim and threadIdx) to index into
+#  vectors being added.. this ensured threads in the same warp (as ordered by threadId)
+#  access contiguous memory locations
 vecaddKernel01.o : vecaddKernel01.cu
 	${NVCC} $< -c -o $@ $(OPTIONS)
 

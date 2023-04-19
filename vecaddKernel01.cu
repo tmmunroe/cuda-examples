@@ -14,6 +14,8 @@ __global__ void AddVectors(const float* A, const float* B, float* C, int N)
     int vecSize = N*threadCount;
     int i;
 
+    // loop so that threads in the same warp access contiguous memory locations
+    //  this coalesces memory accesses
     for(i=threadGlobalIndex; i<vecSize; i+=threadCount){
         C[i] = A[i] + B[i];
     }
