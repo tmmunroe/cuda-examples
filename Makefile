@@ -6,6 +6,9 @@
 ### Created: 2011-01-27 DVN
 ### Last Modified: Nov 2014 WB, WR, LR
 ###
+# vecadd01 - vector addition implemented with memory coalescing
+# matmult01 - matrix multiplication with FOOTPRINT_SIZE=32, and optimizations
+
 
 # SDK_INSTALL_PATH :=  /cm/shared/apps/cuda11.2/toolkit/11.2.2
 # SDK_INSTALL_PATH := /usr/local/cuda-12.1

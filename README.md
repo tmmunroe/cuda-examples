@@ -1,8 +1,6 @@
 # cuda-examples
 
 Max Vector Entries = num vectors * vector scalar * dims * bytes = 3 * 2000*60*128 * 4 ~ 0.185 GB
-
-
 Max Matrix Entries = num matrices * matrix scalar * dims * bytes = 3 * 32*1024*1024 * 4 ~ 0.402 GB
 
 
