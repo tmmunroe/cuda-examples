@@ -40,3 +40,5 @@ matmult02
 arrayadd
 arrayaddUnifiedMemory
 conv
+
+.venv

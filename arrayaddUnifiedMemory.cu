@@ -171,10 +171,12 @@ int main(int argc, char** argv) {
     compute = (argc < 3 ? defaultCompute : argv[2]);
     threading    = (argc < 4 ? defaultThreading : argv[3]); 
 
-    std::cout << "Parameters:" << std::endl;
-    std::cout << "N: " << N << std::endl;
-    std::cout << "Compute: " << compute << std::endl;
-    std::cout << "Threading: " << (compute == "device" ? threading : "N/A") << std::endl;
+    if (verbose) {
+        std::cout << "Parameters:" << std::endl;
+        std::cout << "N: " << N << std::endl;
+        std::cout << "Compute: " << compute << std::endl;
+        std::cout << "Threading: " << (compute == "device" ? threading : "N/A") << std::endl;
+    }
 
     int nFlops(N), nBytes(3*sizeof(float)*N);
     double time, nFlopsPerSec, nGFlopsPerSec, nBytesPerSec, nGBytesPerSec;

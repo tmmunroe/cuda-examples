@@ -17,6 +17,7 @@ for k in "${values[@]}"; do
     echo ""
     echo "vecadd01 $k"
     ./vecadd01 $k
+    echo ""
 done
 
 echo $sep
@@ -30,6 +31,7 @@ for k in "${values[@]}"; do
     echo ""
     echo "matmult00 $k"
     ./matmult00 $k
+    echo ""
 done
 
 echo $sep
@@ -40,6 +42,7 @@ for k in "${values[@]}"; do
     echo ""
     echo "matmult01 $k"
     ./matmult01 $k
+    echo ""
 done
 
 echo $sep
@@ -53,10 +56,11 @@ for k in "${um_ks[@]}"; do
         echo ""
         echo "arrayadd $k $args"
         ./arrayadd $k $args
-        
+
         echo ""
         echo "arrayaddUnifiedMemory $k $args"
         ./arrayaddUnifiedMemory $k $args
+        echo ""
     done
 done
 

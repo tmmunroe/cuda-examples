@@ -15,5 +15,18 @@ NOTE - GCP has an annoying tendency to not have available machines in a region, 
 2) SSH into the new VM
    a) it will ask if you want to install NVIDIA drivers when you first log in- do this
 
+3) Git should be available on the VM
 
-2) Git should be available on the VM
+
+VS Code Remote Development -
+
+1) Create ssh key; add it to the GCP project and local ssh folder
+
+2) Add gcp to ssh config file (remember to update external IP whenever the VM is restarted), with the key from (1)..
+   keep in mind that even though we run from WSL, the path of the key will be resolved in the Windows file system because
+   VS Code actually lives there.. need to copy the SSH key to the Windows home directory too! ~/user/.ssh/keyname
+
+3) Set RemoteExplorer extension's config file path to above config file
+
+4) Start remote session for GCP
+
