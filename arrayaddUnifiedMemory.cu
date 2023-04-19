@@ -64,8 +64,6 @@ void checkCUDAError(std::string msg) {
 double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::string threading) {
     // variables for device vectors
     double time;
-    size_t size = N * sizeof(float);
-
     // set up dimensions for grid and block
     if (threading == "st") {
         dim3 dimBlock(1);

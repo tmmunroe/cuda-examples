@@ -100,9 +100,6 @@ arrayaddUnifiedMemory : arrayaddUnifiedMemory.cu arrayaddKernel.h arrayaddKernel
 
 #######################################################################
 ## conv program
-convKernel.o : convKernel.cu convKernel.h
-	${NVCC} $< -c -o $@ $(OPTIONS)
-
-conv : conv.cu convKernel.h convKernel.o timer.o
-	${NVCC} $< convKernel.o -o $@ $(LIB) timer.o $(OPTIONS)
+conv : conv.cu timer.o
+	${NVCC} $< -o $@ $(LIB) timer.o $(OPTIONS)
 
