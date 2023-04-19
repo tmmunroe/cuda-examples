@@ -154,8 +154,7 @@ double deviceAddArrays(float * dest, float * srcA, float * srcB, int N, std::str
     }
 
     // copy device back to host
-    cudaError_t err = cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
-    std::cerr << "immediate cuda error: " << cudaGetErrorString(err) << std::endl;
+    cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
     checkCUDAError("cudaMemcpy deviceToHost");
 
     // return elapsed time

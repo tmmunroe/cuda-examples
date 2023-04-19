@@ -1,35 +1,427 @@
+Building...
+make: Nothing to be done for 'all'.
+####################################
+####################################
+Part-A: CUDA Matrix Operations
+Problem-1: Vector add and coalescing memory access
+
+vecadd00 500
 Total vector size: 3840000
-Time: 0.000803 (sec), GFlopsS: 4.782104, GBytesS: 57.385252
+Time: 0.000836 (sec), GFlopsS: 4.593875, GBytesS: 55.126506
 Test PASSED 
-Total vector size: 7680000
-Time: 0.001609 (sec), GFlopsS: 4.772893, GBytesS: 57.274716
-Test PASSED 
-Total vector size: 15360000
-Time: 0.003286 (sec), GFlopsS: 4.674540, GBytesS: 56.094479
-Test PASSED 
-vecadd01
+
+vecadd01 500
 Total vector size: 3840000
-Time: 0.000377 (sec), GFlopsS: 10.180864, GBytesS: 122.170372
+Time: 0.000382 (sec), GFlopsS: 10.053762, GBytesS: 120.645149
 Test PASSED 
+
+vecadd00 1000
 Total vector size: 7680000
-Time: 0.000690 (sec), GFlopsS: 11.130703, GBytesS: 133.568437
+Time: 0.001686 (sec), GFlopsS: 4.554900, GBytesS: 54.658803
 Test PASSED 
+
+vecadd01 1000
+Total vector size: 7680000
+Time: 0.000742 (sec), GFlopsS: 10.350982, GBytesS: 124.211779
+Test PASSED 
+
+vecadd00 2000
 Total vector size: 15360000
-Time: 0.001394 (sec), GFlopsS: 11.018387, GBytesS: 132.220645
+Time: 0.003615 (sec), GFlopsS: 4.249077, GBytesS: 50.988927
 Test PASSED 
-matmult00
+
+vecadd01 2000
+Total vector size: 15360000
+Time: 0.001540 (sec), GFlopsS: 9.974378, GBytesS: 119.692540
+Test PASSED 
+####################################
+####################################
+Problem-2: Shared CUDA Matrix Multiply
+FOOTPRINT_SIZE=16
+
+matmult00 16
 Data dimensions: 256x256 
 Grid Dimensions: 16x16 
 Block Dimensions: 16x16 
 Footprint Dimensions: 16x16 
-Time: 0.000069 (sec), nFlops: 33554432, GFlopsS: 486.980929
+Time: 0.000080 (sec), nFlops: 33554432, GFlopsS: 420.111906
+
+Test PASSED
+
+matmult00 32
 Data dimensions: 512x512 
 Grid Dimensions: 32x32 
 Block Dimensions: 16x16 
 Footprint Dimensions: 16x16 
-Time: 0.000421 (sec), nFlops: 268435456, GFlopsS: 637.903630
+Time: 0.000481 (sec), nFlops: 268435456, GFlopsS: 558.205209
+
+Test PASSED
+
+matmult00 64
 Data dimensions: 1024x1024 
 Grid Dimensions: 64x64 
 Block Dimensions: 16x16 
 Footprint Dimensions: 16x16 
-Time: 0.003396 (sec), nFlops: 2147483648, GFlopsS: 632.350411
+Time: 0.004225 (sec), nFlops: 2147483648, GFlopsS: 508.306956
+
+Test PASSED
+####################################
+FOOTPRINT_SIZE=32
+
+matmult01 8
+Data dimensions: 256x256 
+Grid Dimensions: 8x8 
+Block Dimensions: 16x16 
+Footprint Dimensions: 32x32 
+Time: 0.000064 (sec), nFlops: 33554432, GFlopsS: 525.139882
+
+Test PASSED
+
+matmult01 16
+Data dimensions: 512x512 
+Grid Dimensions: 16x16 
+Block Dimensions: 16x16 
+Footprint Dimensions: 32x32 
+Time: 0.000241 (sec), nFlops: 268435456, GFlopsS: 1113.649759
+
+Test PASSED
+
+matmult01 32
+Data dimensions: 1024x1024 
+Grid Dimensions: 32x32 
+Block Dimensions: 16x16 
+Footprint Dimensions: 32x32 
+Time: 0.001733 (sec), nFlops: 2147483648, GFlopsS: 1239.124949
+
+Test PASSED
+####################################
+####################################
+Part-B: CUDA Unified Memory
+
+arrayadd 1 host
+Parameters:
+N: 1000000
+Compute: host
+Threading: N/A
+Time: 0.002678 (sec), GFlopsS: 0.373425, GBytesS: 4.481094
+Test PASSED
+
+arrayaddUnifiedMemory 1 host
+Parameters:
+N: 1000000
+Compute: host
+Threading: N/A
+Time: 0.002097 (sec), GFlopsS: 0.476842, GBytesS: 5.722106
+Test PASSED
+
+arrayadd 1 device st
+Parameters:
+N: 1000000
+Compute: device
+Threading: st
+Time: 0.087314 (sec), GFlopsS: 0.011453, GBytesS: 0.137435
+Test PASSED
+
+arrayaddUnifiedMemory 1 device st
+Parameters:
+N: 1000000
+Compute: device
+Threading: st
+Time: 0.077678 (sec), GFlopsS: 0.012874, GBytesS: 0.154484
+Test PASSED
+
+arrayadd 1 device mt
+Parameters:
+N: 1000000
+Compute: device
+Threading: mt
+Time: 0.001986 (sec), GFlopsS: 0.503518, GBytesS: 6.042215
+Test PASSED
+
+arrayaddUnifiedMemory 1 device mt
+Parameters:
+N: 1000000
+Compute: device
+Threading: mt
+Time: 0.002046 (sec), GFlopsS: 0.488790, GBytesS: 5.865476
+Test PASSED
+
+arrayadd 1 device mbmt
+Parameters:
+N: 1000000
+Compute: device
+Threading: mbmt
+Time: 0.000056 (sec), GFlopsS: 17.848102, GBytesS: 214.177226
+Test PASSED
+
+arrayaddUnifiedMemory 1 device mbmt
+Parameters:
+N: 1000000
+Compute: device
+Threading: mbmt
+Time: 0.000068 (sec), GFlopsS: 14.665399, GBytesS: 175.984783
+Test PASSED
+
+arrayadd 5 host
+Parameters:
+N: 5000000
+Compute: host
+Threading: N/A
+Time: 0.007725 (sec), GFlopsS: 0.647249, GBytesS: 7.766990
+Test PASSED
+
+arrayaddUnifiedMemory 5 host
+Parameters:
+N: 5000000
+Compute: host
+Threading: N/A
+Time: 0.007640 (sec), GFlopsS: 0.654460, GBytesS: 7.853521
+Test PASSED
+
+arrayadd 5 device st
+Parameters:
+N: 5000000
+Compute: device
+Threading: st
+Time: 0.285846 (sec), GFlopsS: 0.017492, GBytesS: 0.209903
+Test PASSED
+
+arrayaddUnifiedMemory 5 device st
+Parameters:
+N: 5000000
+Compute: device
+Threading: st
+Time: 0.285927 (sec), GFlopsS: 0.017487, GBytesS: 0.209844
+Test PASSED
+
+arrayadd 5 device mt
+Parameters:
+N: 5000000
+Compute: device
+Threading: mt
+Time: 0.009859 (sec), GFlopsS: 0.507159, GBytesS: 6.085905
+Test PASSED
+
+arrayaddUnifiedMemory 5 device mt
+Parameters:
+N: 5000000
+Compute: device
+Threading: mt
+Time: 0.010136 (sec), GFlopsS: 0.493297, GBytesS: 5.919560
+Test PASSED
+
+arrayadd 5 device mbmt
+Parameters:
+N: 5000000
+Compute: device
+Threading: mbmt
+Time: 0.000238 (sec), GFlopsS: 21.013547, GBytesS: 252.162565
+Test PASSED
+
+arrayaddUnifiedMemory 5 device mbmt
+Parameters:
+N: 5000000
+Compute: device
+Threading: mbmt
+Time: 0.000287 (sec), GFlopsS: 17.418206, GBytesS: 209.018472
+Test PASSED
+
+arrayadd 10 host
+Parameters:
+N: 10000000
+Compute: host
+Threading: N/A
+Time: 0.016843 (sec), GFlopsS: 0.593716, GBytesS: 7.124587
+Test PASSED
+
+arrayaddUnifiedMemory 10 host
+Parameters:
+N: 10000000
+Compute: host
+Threading: N/A
+Time: 0.015304 (sec), GFlopsS: 0.653430, GBytesS: 7.841164
+Test PASSED
+
+arrayadd 10 device st
+Parameters:
+N: 10000000
+Compute: device
+Threading: st
+Time: 0.572602 (sec), GFlopsS: 0.017464, GBytesS: 0.209570
+Test PASSED
+
+arrayaddUnifiedMemory 10 device st
+Parameters:
+N: 10000000
+Compute: device
+Threading: st
+Time: 0.571875 (sec), GFlopsS: 0.017486, GBytesS: 0.209836
+Test PASSED
+
+arrayadd 10 device mt
+Parameters:
+N: 10000000
+Compute: device
+Threading: mt
+Time: 0.020318 (sec), GFlopsS: 0.492174, GBytesS: 5.906084
+Test PASSED
+
+arrayaddUnifiedMemory 10 device mt
+Parameters:
+N: 10000000
+Compute: device
+Threading: mt
+Time: 0.019483 (sec), GFlopsS: 0.513266, GBytesS: 6.159187
+Test PASSED
+
+arrayadd 10 device mbmt
+Parameters:
+N: 10000000
+Compute: device
+Threading: mbmt
+Time: 0.000464 (sec), GFlopsS: 21.553464, GBytesS: 258.641562
+Test PASSED
+
+arrayaddUnifiedMemory 10 device mbmt
+Parameters:
+N: 10000000
+Compute: device
+Threading: mbmt
+Time: 0.000502 (sec), GFlopsS: 19.925435, GBytesS: 239.105216
+Test PASSED
+
+arrayadd 50 host
+Parameters:
+N: 50000000
+Compute: host
+Threading: N/A
+Time: 0.073040 (sec), GFlopsS: 0.684556, GBytesS: 8.214676
+Test PASSED
+
+arrayaddUnifiedMemory 50 host
+Parameters:
+N: 50000000
+Compute: host
+Threading: N/A
+Time: 0.075240 (sec), GFlopsS: 0.664539, GBytesS: 7.974467
+Test PASSED
+
+arrayadd 50 device st
+Parameters:
+N: 50000000
+Compute: device
+Threading: st
+Time: 2.859422 (sec), GFlopsS: 0.017486, GBytesS: 0.209833
+Test PASSED
+
+arrayaddUnifiedMemory 50 device st
+Parameters:
+N: 50000000
+Compute: device
+Threading: st
+Time: 2.844858 (sec), GFlopsS: 0.017576, GBytesS: 0.210907
+Test PASSED
+
+arrayadd 50 device mt
+Parameters:
+N: 50000000
+Compute: device
+Threading: mt
+Time: 0.100421 (sec), GFlopsS: 0.497904, GBytesS: 5.974849
+Test PASSED
+
+arrayaddUnifiedMemory 50 device mt
+Parameters:
+N: 50000000
+Compute: device
+Threading: mt
+Time: 0.085205 (sec), GFlopsS: 0.586819, GBytesS: 7.041834
+Test PASSED
+
+arrayadd 50 device mbmt
+Parameters:
+N: 50000000
+Compute: device
+Threading: mbmt
+Time: 0.002274 (sec), GFlopsS: 21.987335, GBytesS: 263.848018
+Test PASSED
+
+arrayaddUnifiedMemory 50 device mbmt
+Parameters:
+N: 50000000
+Compute: device
+Threading: mbmt
+Time: 0.002336 (sec), GFlopsS: 21.403878, GBytesS: 256.846540
+Test PASSED
+
+arrayadd 100 host
+Parameters:
+N: 100000000
+Compute: host
+Threading: N/A
+Time: 0.148609 (sec), GFlopsS: 0.672907, GBytesS: 8.074885
+Test PASSED
+
+arrayaddUnifiedMemory 100 host
+Parameters:
+N: 100000000
+Compute: host
+Threading: N/A
+Time: 0.151347 (sec), GFlopsS: 0.660733, GBytesS: 7.928791
+Test PASSED
+
+arrayadd 100 device st
+Parameters:
+N: 100000000
+Compute: device
+Threading: st
+Time: 5.680565 (sec), GFlopsS: 0.017604, GBytesS: 0.211247
+Test PASSED
+
+arrayaddUnifiedMemory 100 device st
+Parameters:
+N: 100000000
+Compute: device
+Threading: st
+Time: 5.717376 (sec), GFlopsS: 0.017491, GBytesS: 0.209886
+Test PASSED
+
+arrayadd 100 device mt
+Parameters:
+N: 100000000
+Compute: device
+Threading: mt
+Time: 0.138275 (sec), GFlopsS: 0.723196, GBytesS: 8.678349
+Test PASSED
+
+arrayaddUnifiedMemory 100 device mt
+Parameters:
+N: 100000000
+Compute: device
+Threading: mt
+Time: 0.138533 (sec), GFlopsS: 0.721849, GBytesS: 8.662189
+Test PASSED
+
+arrayadd 100 device mbmt
+Parameters:
+N: 100000000
+Compute: device
+Threading: mbmt
+Time: 0.004541 (sec), GFlopsS: 22.021968, GBytesS: 264.263614
+Test PASSED
+
+arrayaddUnifiedMemory 100 device mbmt
+Parameters:
+N: 100000000
+Compute: device
+Threading: mbmt
+Time: 0.004707 (sec), GFlopsS: 21.245588, GBytesS: 254.947057
+Test PASSED
+####################################
+####################################
+Part-C: Convolution in CUDA
+3739750450920.000000,39.339066
+3739750450920.000000,24.232149
+3739750450920.000000,36.458015
+####################################
+####################################
