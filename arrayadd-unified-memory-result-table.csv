@@ -1,0 +1,21 @@
+,name,compute,k,time
+0,arrayaddUnifiedMemory,host,1,0.002944
+1,arrayaddUnifiedMemory,device st,1,0.07065
+2,arrayaddUnifiedMemory,device mt,1,0.001955
+3,arrayaddUnifiedMemory,device mbmt,1,7.1e-05
+4,arrayaddUnifiedMemory,host,5,0.009441
+5,arrayaddUnifiedMemory,device st,5,0.284201
+6,arrayaddUnifiedMemory,device mt,5,0.009188
+7,arrayaddUnifiedMemory,device mbmt,5,0.000267
+8,arrayaddUnifiedMemory,host,10,0.015539
+9,arrayaddUnifiedMemory,device st,10,0.568082
+10,arrayaddUnifiedMemory,device mt,10,0.023982
+11,arrayaddUnifiedMemory,device mbmt,10,0.000494
+12,arrayaddUnifiedMemory,host,50,0.092057
+13,arrayaddUnifiedMemory,device st,50,2.839809
+14,arrayaddUnifiedMemory,device mt,50,0.077638
+15,arrayaddUnifiedMemory,device mbmt,50,0.00235
+16,arrayaddUnifiedMemory,host,100,0.148546
+17,arrayaddUnifiedMemory,device st,100,5.680448
+18,arrayaddUnifiedMemory,device mt,100,0.138497
+19,arrayaddUnifiedMemory,device mbmt,100,0.00948

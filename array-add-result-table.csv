@@ -1,0 +1,21 @@
+,name,compute,k,time
+0,arrayadd,host,1,0.002646
+1,arrayadd,device st,1,0.083101
+2,arrayadd,device mt,1,0.002422
+3,arrayadd,device mbmt,1,6.1e-05
+4,arrayadd,host,5,0.008224
+5,arrayadd,device st,5,0.283951
+6,arrayadd,device mt,5,0.012003
+7,arrayadd,device mbmt,5,0.000238
+8,arrayadd,host,10,0.019344
+9,arrayadd,device st,10,0.568733
+10,arrayadd,device mt,10,0.017872
+11,arrayadd,device mbmt,10,0.00047
+12,arrayadd,host,50,0.076401
+13,arrayadd,device st,50,2.840117
+14,arrayadd,device mt,50,0.093687
+15,arrayadd,device mbmt,50,0.00229
+16,arrayadd,host,100,0.177756
+17,arrayadd,device st,100,5.681397
+18,arrayadd,device mt,100,0.145569
+19,arrayadd,device mbmt,100,0.004558

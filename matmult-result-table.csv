@@ -1,0 +1,7 @@
+,name,footprint,dim,time,gflops,footprintLabel,speedup
+0,matmult00,16,256,7.8e-05,430.389873,matmult00 Footprint=16,1.0
+1,matmult00,16,512,0.000435,617.269686,matmult00 Footprint=16,1.0
+2,matmult00,16,1024,0.003812,563.337248,matmult00 Footprint=16,1.0
+3,matmult01,32,256,4.4e-05,760.74318,matmult01 Footprint=32,1.7727272727272727
+4,matmult01,32,512,0.000236,1137.272633,matmult01 Footprint=32,1.843220338983051
+5,matmult01,32,1024,0.001566,1371.376257,matmult01 Footprint=32,2.434227330779055
