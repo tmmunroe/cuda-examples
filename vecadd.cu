@@ -1,12 +1,7 @@
 
 ///
 /// vecadd.cu
-/// For COMS E6998 Spring 2023
-/// Instructor: Parajit Dube and Kaoutar El Maghraoui
 /// Based on code from the CUDA Programming Guide
-/// Modified by Wim Bohm and David Newman
-/// Created: 2011-02-03
-/// Last Modified: 2011-03-03 DVN
 ///
 /// Add two Vectors A and B in C on GPU using
 /// a kernel defined according to vecAddKernel.h

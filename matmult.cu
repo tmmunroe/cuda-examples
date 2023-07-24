@@ -1,16 +1,6 @@
 ///
 /// matmult.cu
-/// For COMS E6998 Spring 2023
-/// Instructor: Parajit Dube and Kaoutar El Maghraoui
 /// Based on code from the CUDA Programming Guide
-/// Modified by Wim Bohm and David Newman
-/// Created: 2011-01-27
-/// Last Modified: 2011-02-19 DVN
-///
-/// Do not modify this file. The GTA will grade your
-/// code using the master copy of this file, not your
-/// copy, so any modifications you make will not play
-/// a role in the grading.
 ///
 
 // Includes

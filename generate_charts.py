@@ -219,7 +219,7 @@ def generate_arrayadd_graphs():
     
 
 if __name__ == '__main__':
-    # generate_arrayadd_graphs()
+    generate_arrayadd_graphs()
     generate_vecadd_graphs()
     generate_matmult_graphs()
     

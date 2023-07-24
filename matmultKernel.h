@@ -1,11 +1,5 @@
 /// matmultKernel.h
-/// For COMS E6998 Spring 2023
-/// Instructor: Parajit Dube and Kaoutar El Maghraoui
 /// Based on code from the CUDA Programming Guide
-/// Modified by Wim Bohm and David Newman
-/// Created: 2011-02-16
-/// Last Modified: 2011-02-19 DVN
-///
 /// Kernels defined with this header must 
 /// multiply two matrices using CUDA: A x B = C
 ///

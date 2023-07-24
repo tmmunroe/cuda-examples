@@ -1,19 +1,4 @@
-###
-### For COMS E6998 Spring 2023
-### Instructor: Parajit Dube and Kaoutar El Maghraoui
-### Makefile for CUDA1 assignment
-### By Wim Bohm, Waruna Ranasinghe, and Louis Rabiet
-### Created: 2011-01-27 DVN
-### Last Modified: Nov 2014 WB, WR, LR
-###
-# vecadd01 - vector addition implemented with memory coalescing
-# matmult01 - matrix multiplication with FOOTPRINT_SIZE=32, and optimizations
-
-
-# SDK_INSTALL_PATH :=  /cm/shared/apps/cuda11.2/toolkit/11.2.2
-# SDK_INSTALL_PATH := /usr/local/cuda-12.1
 SDK_INSTALL_PATH := /usr/local/cuda-11.0
-# SDK_INSTALL_PATH := /usr/local/cuda
 NVCC=$(SDK_INSTALL_PATH)/bin/nvcc
 LIB       :=  -L$(SDK_INSTALL_PATH)/lib64 -L$(SDK_INSTALL_PATH)/samples/common/lib/linux/x86_64 -lcudnn -lcublas -lcublasLt -lz
 #INCLUDES  :=  -I$(SDK_INSTALL_PATH)/include -I$(SDK_INSTALL_PATH)/samples/common/inc
@@ -21,7 +6,7 @@ OPTIONS   :=  -O3 -g -G
 OPTIONS   :=  -O3
 #--maxrregcount=100 --ptxas-options -v 
 
-TAR_FILE_NAME  := TurnerMandevilleCUDA1.tar
+TAR_FILE_NAME  := cuda-examples.tar
 EXECS :=  vecadd00 matmult00 vecadd01 matmult01 matmult02 arrayadd arrayaddUnifiedMemory conv
 all:$(EXECS)
 
@@ -31,7 +16,7 @@ clean:
 
 #######################################################################
 tar:
-	tar -cvf $(TAR_FILE_NAME) Makefile *.h *.cu *.pdf *.txt
+	tar -cvf $(TAR_FILE_NAME) Makefile README.md *.h *.cu *.pdf *.txt *.py
 #######################################################################
 
 timer.o : timer.cu timer.h

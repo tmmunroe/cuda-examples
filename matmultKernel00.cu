@@ -1,16 +1,8 @@
 ///
 /// matmultKernel00.cu
-/// For COMS E6998 Spring 2023
-/// Instructor: Parajit Dube and Kaoutar El Maghraoui
 /// Based on code from the CUDA Programming Guide
-/// Modified by Wim Bohm and David Newman
-/// Created: 2011-01-27
-/// Last Modified: 2011-02-23 DVN
 ///
 /// Multiplies two matrices using CUDA: A x B = C
-///
-/// Copy this file and modify the MatMultKernel device function for
-/// each of your experiments. 
 ///
 
 #include "matmultKernel.h"
